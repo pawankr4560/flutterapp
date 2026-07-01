@@ -134,7 +134,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: ApplicationStatusScreen()),
+      const MaterialApp(home: ApplicationStatusScreen(applicationId: 'LN-2026-00482')),
     );
     await tester.pumpAndSettle();
 

@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
 import '../../models/document_item.dart';
+import '../application/document_requests.dart';
+import '../application/loan_service.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -15,6 +20,9 @@ class DocumentUploadScreen extends StatefulWidget {
 }
 
 class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
+  final LoanService _loanService = LoanService();
+  bool _isSubmitting = false;
+
   List<DocumentItem> _documents = const [
     DocumentItem(
       name: 'PAN card',
@@ -104,11 +112,54 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     });
   }
 
-  void _submitApplication() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Application submitted for review')),
+  Future<void> _submitApplication() async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final request = DocumentUploadRequest(
+      applicationId: '2026-GKFIN-00003',
+      documents: _documents
+          .map(
+            (document) => LoanDocument(
+              type: document.name,
+              url: document.filePath ?? document.name,
+            ),
+          )
+          .toList(),
     );
-    context.go('/status');
+
+    try {
+      final response = await _loanService.uploadDocuments(request);
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
+      final success = responseBody?['success'] == true;
+      final message = responseBody?['message'] as String?;
+
+      if (success) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Documents uploaded successfully')),
+        );
+        context.push('${AppRoutePaths.status}?applicationId=2026-GKFIN-00003');
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Document upload failed.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to upload documents.')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -140,8 +191,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
             AppButton(
-              label: 'Submit application',
-              onPressed: _canSubmit ? _submitApplication : null,
+              label: _isSubmitting ? 'Submitting...' : 'Submit application',
+              onPressed: !_canSubmit || _isSubmitting ? null : _submitApplication,
             ),
           ],
         ),

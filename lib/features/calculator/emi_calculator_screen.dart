@@ -97,7 +97,7 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: 'Apply for this loan',
-              onPressed: () => context.go('/apply'),
+              onPressed: () => context.push('/apply'),
             ),
           ],
         ),

@@ -1,44 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../models/emi_summary.dart';
 import '../../models/loan_application.dart';
+import '../application/loan_service.dart';
+import 'active_applications_section.dart';
+import 'emi_summary_card.dart';
+import 'empty_loan_state.dart';
+import 'loan_offer_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
-  static const LoanApplication _activeApplication = LoanApplication(
-    id: 'LN-2026-00482',
-    type: 'Personal Loan',
-    amount: 800000,
-    status: 'Under review',
-    stepsCompleted: 2,
+  static const bool _hasPreApprovedOffer = true;
+  static const String _userId = 'd853e508-a345-46aa-8aee-552a3329afaa';
+  static const String _bearerToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBhd2FuQGdtYWlsLmNvbSIsIkVtYWlsIjoicGF3YW5AZ21haWwuY29tIiwiSWQiOiJkODUzZTUwOC1hMzQ1LTQ2YWEtOGFlZS01NTJhMzMyOWFmYWEiLCJQaG9uZSI6IjQ3MjM5Mjc5Mjc4MzkyMzgiLCJGaXJzdE5hbWUiOiJQYXdhbiIsIkxhc3ROYW1lIjoiS3VtYWFIciIsIkh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlVzZXIiLCJleHAiOjE3ODI5MzYwNjksImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCJ9.xuazIu5sXyatxU6pTelDaJqNcfTix55PHd4G8EdbUbU';
+
+  static final EmiSummary _emiSummary = EmiSummary(
+    amount: 15400,
+    dueDate: DateTime.now().add(const Duration(days: 8)),
   );
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final LoanService _loanService = LoanService();
+  late final Future<List<LoanApplication>> _applicationsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _applicationsFuture = _loanService.fetchApplications(
+      DashboardScreen._userId,
+      DashboardScreen._bearerToken,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
+        title: const Text('Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const CircleAvatar(
+              radius: 16,
+              child: Icon(Icons.person, size: 18),
+            ),
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: const [
-            _GreetingHeader(userName: 'Aarav'),
-            SizedBox(height: AppSpacing.lg),
-            _LoanOfferCard(),
-            SizedBox(height: AppSpacing.xl),
-            _SectionTitle(title: 'Choose loan type'),
-            SizedBox(height: AppSpacing.md),
-            _LoanTypeGrid(),
-            SizedBox(height: AppSpacing.xl),
-            _SectionTitle(title: 'Active application'),
-            SizedBox(height: AppSpacing.md),
-            _ActiveApplicationTile(application: _activeApplication),
-          ],
+        child: FutureBuilder<List<LoanApplication>>(
+          future: _applicationsFuture,
+          builder: (context, snapshot) {
+            final applications = snapshot.data ?? const [];
+            final hasApplications = applications.isNotEmpty;
+            final hasOffers = DashboardScreen._hasPreApprovedOffer || hasApplications;
+
+            return ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                const _GreetingHeader(userName: 'Aarav'),
+                const SizedBox(height: AppSpacing.lg),
+                if (hasOffers) ...[
+                  LoanOfferCard(
+                    amountLabel: 'Up to ₹8,00,000',
+                    interestRateLabel: 'Interest rate from 9.25% p.a.',
+                    onApply: () => context.push(AppRoutePaths.apply),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  EmiSummaryCard(summary: DashboardScreen._emiSummary),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionTitle(title: 'Choose loan type'),
+                  const SizedBox(height: AppSpacing.md),
+                  const _LoanTypeGrid(),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionTitle(title: 'Active applications'),
+                  const SizedBox(height: AppSpacing.md),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const Center(child: CircularProgressIndicator())
+                  else if (hasApplications)
+                    ActiveApplicationsSection(
+                      applications: applications,
+                      onViewAll: () {},
+                      onApplicationTap: (applicationId) => context.push(
+                        '${AppRoutePaths.status}?applicationId=$applicationId',
+                      ),
+                    )
+                  else
+                    const Text('No active applications yet.'),
+                ] else ...[
+                  const EmptyLoanState(onBrowseTypes: _browseLoanTypes),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
+
+  static void _browseLoanTypes() {}
 }
 
 class _GreetingHeader extends StatelessWidget {
@@ -46,13 +123,20 @@ class _GreetingHeader extends StatelessWidget {
 
   final String userName;
 
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Good morning',
+          _greeting(),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,
@@ -64,79 +148,6 @@ class _GreetingHeader extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ],
-    );
-  }
-}
-
-class _LoanOfferCard extends StatelessWidget {
-  const _LoanOfferCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.local_offer_outlined,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              const Expanded(
-                child: Text(
-                  'Pre-approved loan offer',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const Text(
-            'Up to Rs. 8,00,000',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Interest rate from 9.25% p.a.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.86),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -194,7 +205,7 @@ class _LoanTypeCard extends StatelessWidget {
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        onTap: () => context.go('/apply'),
+        onTap: () => context.push('/apply'),
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -223,86 +234,6 @@ class _LoanTypeCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActiveApplicationTile extends StatelessWidget {
-  const _ActiveApplicationTile({required this.application});
-
-  final LoanApplication application;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: () => context.go('/status'),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.assignment_outlined,
-                  color: AppColors.accent,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      application.type,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Flexible(
-                          child: Text(
-                            'Status: ${application.status}',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted),
             ],
           ),
         ),

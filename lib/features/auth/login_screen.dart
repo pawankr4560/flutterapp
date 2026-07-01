@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -5,9 +7,87 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_text_field.dart';
+import 'auth_form_mixin.dart';
+import 'auth_logo.dart';
+import 'auth_requests.dart';
+import 'auth_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScreen> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _authService = AuthService();
+  String? _usernameError;
+  String? _passwordError;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  bool _isEmail(String value) => value.contains('@');
+
+  bool _isValidEmail(String value) => _emailRegex.hasMatch(value);
+
+  Future<void> _submitLogin() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+
+    setState(() {
+      _usernameError = null;
+      _passwordError = null;
+    });
+
+    var hasError = false;
+    if (username.isEmpty) {
+      _usernameError = 'Please enter email or phone.';
+      hasError = true;
+    } else if (_isEmail(username) && !_isValidEmail(username)) {
+      _usernameError = 'Enter a valid email address.';
+      hasError = true;
+    }
+    if (password.isEmpty) {
+      _passwordError = 'Please enter your password.';
+      hasError = true;
+    }
+
+    if (hasError) {
+      setState(() {});
+      final firstError = _usernameError ?? _passwordError;
+      if (firstError != null) {
+        showToast(firstError);
+      }
+      return;
+    }
+
+    await runAuthRequest(() async {
+      final request = LoginRequest(username: username, password: password);
+      final response = await _authService.login(request);
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
+      final success = responseBody?['success'] == true;
+      final message = responseBody?['message'] as String?;
+
+      if (success) {
+        if (!mounted) return;
+        showToast(message ?? 'Login successful.');
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) return;
+        context.go('/home');
+      } else {
+        showToast(message ?? 'Login failed. Please check your credentials.');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +104,7 @@ class LoginScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _AppLogo(),
+                  const AuthLogo(icon: Icons.account_balance_wallet_outlined),
                   const SizedBox(height: 28),
                   Text(
                     'Welcome back',
@@ -38,20 +118,39 @@ class LoginScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  const AppTextField(
-                    label: 'Phone number',
-                    hintText: 'Enter your phone number',
-                    keyboardType: TextInputType.phone,
+                  AppTextField(
+                    controller: _usernameController,
+                    label: 'Email or phone',
+                    hintText: 'Enter your email or phone',
                     textInputAction: TextInputAction.next,
-                    prefixIcon: Icons.phone_outlined,
+                    prefixIcon: Icons.person_outline,
+                    enabled: !isLoading,
+                    errorText: _usernameError,
+                    onChanged: (_) {
+                      if (_usernameError != null) {
+                        setState(() {
+                          _usernameError = null;
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  const AppTextField(
+                  AppTextField(
+                    controller: _passwordController,
                     label: 'Password',
                     hintText: 'Enter your password',
                     obscureText: true,
                     textInputAction: TextInputAction.done,
                     prefixIcon: Icons.lock_outline,
+                    enabled: !isLoading,
+                    errorText: _passwordError,
+                    onChanged: (_) {
+                      if (_passwordError != null) {
+                        setState(() {
+                          _passwordError = null;
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Align(
@@ -63,8 +162,8 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   AppButton(
-                    label: 'Log in',
-                    onPressed: () => context.go('/home'),
+                    label: isLoading ? 'Logging in...' : 'Log in',
+                    onPressed: isLoading ? null : _submitLogin,
                   ),
                   const SizedBox(height: 28),
                   Row(
@@ -77,7 +176,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => context.go('/signup'),
+                        onPressed: isLoading ? null : () => context.push('/signup'),
                         child: const Text('Create account'),
                       ),
                     ],
@@ -92,43 +191,3 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-class _AppLogo extends StatelessWidget {
-  const _AppLogo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            color: AppColors.accent,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.22),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.account_balance_wallet_outlined,
-            color: Colors.white,
-            size: 38,
-          ),
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          'Loan Tracker',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    );
-  }
-}

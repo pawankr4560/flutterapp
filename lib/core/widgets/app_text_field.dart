@@ -11,6 +11,10 @@ class AppTextField extends StatelessWidget {
     this.textInputAction,
     this.obscureText = false,
     this.prefixIcon,
+    this.controller,
+    this.errorText,
+    this.enabled = true,
+    this.onChanged,
   });
 
   final String label;
@@ -19,13 +23,20 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final bool obscureText;
   final IconData? prefixIcon;
+  final TextEditingController? controller;
+  final String? errorText;
+  final bool enabled;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       obscureText: obscureText,
+      enabled: enabled,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
@@ -39,6 +50,7 @@ class AppTextField extends StatelessWidget {
         border: _border(AppColors.border),
         enabledBorder: _border(AppColors.border),
         focusedBorder: _border(AppColors.accent, width: 1.4),
+        errorText: errorText,
       ),
     );
   }

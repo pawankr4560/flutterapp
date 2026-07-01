@@ -2,101 +2,129 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/loan_application.dart';
+import '../../models/loan_status.dart';
+import '../application/loan_service.dart';
 
-class ApplicationStatusScreen extends StatelessWidget {
-  const ApplicationStatusScreen({super.key});
+class ApplicationStatusScreen extends StatefulWidget {
+  const ApplicationStatusScreen({super.key, required this.applicationId});
 
-  static const LoanApplication _application = LoanApplication(
-    id: 'LN-2026-00482',
-    type: 'Personal Loan',
-    amount: 800000,
-    status: 'Under review',
-    stepsCompleted: 2,
-  );
+  final String? applicationId;
 
-  static const List<_TimelineStage> _stages = [
-    _TimelineStage(
-      title: 'Application submitted',
-      status: _TimelineStatus.done,
-      date: '28 Jun 2026',
-    ),
-    _TimelineStage(
-      title: 'Documents verified',
-      status: _TimelineStatus.done,
-      date: '29 Jun 2026',
-    ),
-    _TimelineStage(
-      title: 'Credit assessment',
-      status: _TimelineStatus.inProgress,
-    ),
-    _TimelineStage(
-      title: 'Loan disbursed',
-      status: _TimelineStatus.pending,
-    ),
-  ];
+  @override
+  State<ApplicationStatusScreen> createState() => _ApplicationStatusScreenState();
+}
+
+class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
+  static const String _userId = 'd853e508-a345-46aa-8aee-552a3329afaa';
+  static const String _bearerToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBhd2FuQGdtYWlsLmNvbSIsIkVtYWlsIjoicGF3YW5AZ21haWwuY29tIiwiSWQiOiJkODUzZTUwOC1hMzQ1LTQ2YWEtOGFlZS01NTJhMzMyOWFmYWEiLCJQaG9uZSI6IjQ3MjM5Mjc5Mjc4MzkyMzgiLCJGaXJzdE5hbWUiOiJQYXdhbiIsIkxhc3ROYW1lIjoiS3VtYWFIciIsIkh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlVzZXIiLCJleHAiOjE3ODI5MzYwNjksImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCJ9.xuazIu5sXyatxU6pTelDaJqNcfTix55PHd4G8EdbUbU';
+
+  final LoanService _loanService = LoanService();
+  late final Future<LoanStatus> _statusFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _statusFuture = _loadStatus();
+  }
+
+  Future<LoanStatus> _loadStatus() {
+    final applicationId = widget.applicationId;
+    if (applicationId == null || applicationId.isEmpty) {
+      return Future.error('Missing loan application ID');
+    }
+
+    return _loanService.fetchApplicationStatus(
+      _userId,
+      applicationId,
+      _bearerToken,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Application status')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            Container(
+        child: FutureBuilder<LoanStatus>(
+          future: _statusFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Text(
+                    'Unable to load application status.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+              );
+            }
+
+            final status = snapshot.requireData;
+            return ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Application ID',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    _application.id,
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Application ID',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        status.id,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        '${status.type} - ${status.status}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    '${_application.type} - ${_application.status}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'Progress timeline',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Text(
-              'Progress timeline',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  for (var index = 0; index < _stages.length; index++)
-                    _TimelineRow(
-                      stage: _stages[index],
-                      isLast: index == _stages.length - 1,
-                    ),
-                ],
-              ),
-            ),
-          ],
+                  child: Column(
+                    children: [
+                      for (var index = 0; index < status.stages.length; index++)
+                        _TimelineRow(
+                          stage: status.stages[index],
+                          isLast: index == status.stages.length - 1,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -109,24 +137,25 @@ class _TimelineRow extends StatelessWidget {
     required this.isLast,
   });
 
-  final _TimelineStage stage;
+  final LoanStatusStage stage;
   final bool isLast;
 
   @override
   Widget build(BuildContext context) {
+    final status = _timelineStatusFromString(stage.status);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
             children: [
-              _TimelineIndicator(status: stage.status),
+              _TimelineIndicator(status: status),
               if (!isLast)
                 Expanded(
                   child: Container(
                     width: 2,
                     margin: const EdgeInsets.symmetric(vertical: 6),
-                    color: stage.status == _TimelineStatus.pending
+                    color: status == _TimelineStatus.pending
                         ? AppColors.surfaceMuted
                         : AppColors.border,
                   ),
@@ -143,7 +172,7 @@ class _TimelineRow extends StatelessWidget {
                   Text(
                     stage.title,
                     style: TextStyle(
-                      color: stage.status == _TimelineStatus.pending
+                      color: status == _TimelineStatus.pending
                           ? AppColors.textMuted
                           : AppColors.textPrimary,
                       fontSize: 16,
@@ -152,9 +181,9 @@ class _TimelineRow extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    stage.subtitle,
+                    _stageSubtitle(stage, status),
                     style: TextStyle(
-                      color: stage.status == _TimelineStatus.pending
+                      color: status == _TimelineStatus.pending
                           ? AppColors.textMuted
                           : AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
@@ -168,6 +197,54 @@ class _TimelineRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _stageSubtitle(LoanStatusStage stage, _TimelineStatus status) {
+  if (stage.date != null) {
+    final date = stage.date!;
+    return '${date.day.toString().padLeft(2, '0')} '
+        '${_monthName(date.month)} ${date.year}';
+  }
+
+  switch (status) {
+    case _TimelineStatus.done:
+      return 'Completed';
+    case _TimelineStatus.inProgress:
+      return 'In progress';
+    case _TimelineStatus.pending:
+      return 'Pending';
+  }
+}
+
+_TimelineStatus _timelineStatusFromString(String value) {
+  switch (value.toLowerCase()) {
+    case 'done':
+      return _TimelineStatus.done;
+    case 'inprogress':
+    case 'in_progress':
+    case 'in progress':
+      return _TimelineStatus.inProgress;
+    default:
+      return _TimelineStatus.pending;
+  }
+}
+
+String _monthName(int month) {
+  const names = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return names[month - 1];
 }
 
 class _TimelineIndicator extends StatelessWidget {
@@ -218,29 +295,6 @@ class _TimelineIndicator extends StatelessWidget {
             border: Border.all(color: AppColors.border),
           ),
         );
-    }
-  }
-}
-
-class _TimelineStage {
-  const _TimelineStage({
-    required this.title,
-    required this.status,
-    this.date,
-  });
-
-  final String title;
-  final _TimelineStatus status;
-  final String? date;
-
-  String get subtitle {
-    switch (status) {
-      case _TimelineStatus.done:
-        return date ?? 'Completed';
-      case _TimelineStatus.inProgress:
-        return 'In progress';
-      case _TimelineStatus.pending:
-        return 'Pending';
     }
   }
 }
