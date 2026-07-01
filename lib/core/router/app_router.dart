@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/application/application_form_screen.dart';
@@ -7,6 +6,9 @@ import '../../features/auth/signup_screen.dart';
 import '../../features/calculator/emi_calculator_screen.dart';
 import '../../features/documents/document_upload_screen.dart';
 import '../../features/home/dashboard_screen.dart';
+import '../../features/home/loans_screen.dart';
+import '../../features/home/payments_screen.dart';
+import '../../features/home/profile_screen.dart';
 import '../../features/home/nav_home_screen.dart';
 import '../../features/status/application_status_screen.dart';
 
@@ -46,15 +48,15 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: AppRoutePaths.loans,
-            builder: (context, state) => const _NavPlaceholder(title: 'Loans'),
+            builder: (context, state) => const LoansScreen(),
           ),
           GoRoute(
             path: AppRoutePaths.payments,
-            builder: (context, state) => const _NavPlaceholder(title: 'Payments'),
+            builder: (context, state) => const PaymentsScreen(),
           ),
           GoRoute(
             path: AppRoutePaths.profile,
-            builder: (context, state) => const _NavPlaceholder(title: 'Profile'),
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
@@ -80,21 +82,3 @@ GoRouter createAppRouter() {
   );
 }
 
-class _NavPlaceholder extends StatelessWidget {
-  const _NavPlaceholder({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          '$title content coming soon',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-      ),
-    );
-  }
-}
