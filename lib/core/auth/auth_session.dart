@@ -19,7 +19,10 @@ class AuthSession extends ChangeNotifier {
   String? _email;
 
   bool get isAuthenticated =>
-      _userId != null && _userId!.isNotEmpty && _bearerToken != null && _bearerToken!.isNotEmpty;
+      _userId != null &&
+      _userId!.isNotEmpty &&
+      _bearerToken != null &&
+      _bearerToken!.isNotEmpty;
 
   String get userId => _userId ?? '';
 
@@ -64,30 +67,38 @@ class AuthSession extends ChangeNotifier {
     }
 
     final data = _normalizeMap(responseBody['data']) ?? _normalizeMap(responseBody);
-    final payload = _normalizeMap(data?['user']) ?? data;
-    if (payload == null) {
+    final userPayload = _normalizeMap(data?['user']);
+    final authPayload = data;
+    final profilePayload = userPayload ?? authPayload;
+    if (authPayload == null || profilePayload == null) {
       return;
     }
 
-    final bearerToken = _extractFirstString(payload, [
+    final bearerToken = _extractFirstString(authPayload, [
+      'token',
+      'accessToken',
+      'bearerToken',
+      'authToken',
+      'jwt',
+    ]) ?? _extractFirstString(profilePayload, [
       'token',
       'accessToken',
       'bearerToken',
       'authToken',
       'jwt',
     ]);
-    final userId = _extractFirstString(payload, [
+    final userId = _extractFirstString(profilePayload, [
       'userId',
       'id',
       'user_id',
     ]);
-    final userName = _extractFirstString(payload, [
+    final userName = _extractFirstString(profilePayload, [
       'userName',
       'name',
       'fullName',
       'firstName',
     ]);
-    final email = _extractFirstString(payload, [
+    final email = _extractFirstString(profilePayload, [
       'email',
       'userEmail',
     ]);
