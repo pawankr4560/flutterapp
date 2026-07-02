@@ -69,7 +69,11 @@ class EmiSummaryCard extends StatelessWidget {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Pay now is not implemented yet.')),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accent,
               shape: RoundedRectangleBorder(

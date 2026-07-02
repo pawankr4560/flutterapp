@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_session.dart';
 import '../../features/application/application_form_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
@@ -30,6 +32,22 @@ class AppRoutePaths {
 GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: AppRoutePaths.login,
+    refreshListenable: AuthSession.instance,
+    redirect: (BuildContext context, GoRouterState state) {
+      final isAuthenticated = AuthSession.instance.isAuthenticated;
+      final loggingIn = state.uri.path == AppRoutePaths.login;
+      final signingUp = state.uri.path == AppRoutePaths.signup;
+
+      if (!isAuthenticated && !loggingIn && !signingUp) {
+        return AppRoutePaths.login;
+      }
+
+      if (isAuthenticated && (loggingIn || signingUp)) {
+        return AppRoutePaths.home;
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: AppRoutePaths.login,

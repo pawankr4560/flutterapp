@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_session.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -130,7 +131,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     );
 
     try {
-      final response = await _loanService.uploadDocuments(request);
+      final response = await _loanService.uploadDocuments(
+        request,
+        AuthSession.instance.bearerToken,
+      );
       final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
       final success = responseBody?['success'] == true;
       final message = responseBody?['message'] as String?;
@@ -147,10 +151,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           SnackBar(content: Text(message ?? 'Document upload failed.')),
         );
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to upload documents.')),
+          SnackBar(content: Text(error.toString())),
         );
       }
     } finally {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
@@ -31,10 +32,6 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
   final Map<String, dynamic> _formData = {};
   final LoanService _loanService = LoanService();
   bool _isSubmitting = false;
-
-  static const String _userId = 'd853e508-a345-46aa-8aee-552a3329afaa';
-  static const String _bearerToken =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBhd2FuQGdtYWlsLmNvbSIsIkVtYWlsIjoicGF3YW5AZ21haWwuY29tIiwiSWQiOiJkODUzZTUwOC1hMzQ1LTQ2YWEtOGFlZS01NTJhMzMyOWFmYWEiLCJQaG9uZSI6IjQ3MjM5Mjc5Mjc4MzkyMzgiLCJGaXJzdE5hbWUiOiJQYXdhbiIsIkxhc3ROYW1lIjoiS3VtYXIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJVc2VyIiwiZXhwIjoxNzgyOTM2MDY5LCJpc3MiOiJsb2NhbGhvc3QiLCJhdWQiOiJsb2NhbGhvc3QifQ.xuazIu5sXyatxU6pTelDaJqNcfTix55PHd4G8EdbUbU';
 
   int _currentStep = 0;
 
@@ -86,7 +83,7 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
 
     try {
       final request = LoanApplicationRequest(
-        userId: _userId,
+        userId: AuthSession.instance.userId,
         fullName: _formData['name']?.toString() ?? '',
         dob: (_formData['dob'] as DateTime).toUtc().toIso8601String(),
         address: _formData['address']?.toString() ?? '',
@@ -103,7 +100,7 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
 
       final response = await _loanService.submitApplication(
         request,
-        _bearerToken,
+        AuthSession.instance.bearerToken,
       );
       final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
       final success = responseBody?['success'] == true;

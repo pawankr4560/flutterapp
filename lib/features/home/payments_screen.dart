@@ -73,7 +73,11 @@ class PaymentsScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: 'Pay next EMI',
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('EMI payment integration is coming soon.')),
+                );
+              },
             ),
           ],
         ),

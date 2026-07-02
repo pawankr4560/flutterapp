@@ -12,12 +12,20 @@ class AuthService {
   final Uri _signupUri = Uri.parse('${AppConfig.baseUrl}/Auth/Signup');
   final Uri _loginUri = Uri.parse('${AppConfig.baseUrl}/Auth/Login');
 
-  Future<http.Response> signup(SignupRequest request) {
-    return _post(_signupUri, request.toJson());
+  Future<http.Response> signup(SignupRequest request) async {
+    try {
+      return await _post(_signupUri, request.toJson());
+    } catch (error) {
+      throw Exception('Signup failed. Please check your network connection.');
+    }
   }
 
-  Future<http.Response> login(LoginRequest request) {
-    return _post(_loginUri, request.toJson());
+  Future<http.Response> login(LoginRequest request) async {
+    try {
+      return await _post(_loginUri, request.toJson());
+    } catch (error) {
+      throw Exception('Login failed. Please check your network connection.');
+    }
   }
 
   Future<http.Response> _post(Uri uri, Map<String, dynamic> body) {

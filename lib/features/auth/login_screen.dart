@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/auth/auth_session.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_text_field.dart';
 import 'auth_form_mixin.dart';
@@ -39,6 +40,10 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
 
   bool _isValidEmail(String value) => _emailRegex.hasMatch(value);
 
+  void _handleForgotPassword() {
+    showToast('Password recovery is not implemented yet. Please contact support.');
+  }
+
   Future<void> _submitLogin() async {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
@@ -71,20 +76,25 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
     }
 
     await runAuthRequest(() async {
-      final request = LoginRequest(username: username, password: password);
-      final response = await _authService.login(request);
-      final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final success = responseBody?['success'] == true;
-      final message = responseBody?['message'] as String?;
+      try {
+        final request = LoginRequest(username: username, password: password);
+        final response = await _authService.login(request);
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
+        final success = responseBody?['success'] == true;
+        final message = responseBody?['message'] as String?;
 
-      if (success) {
-        if (!mounted) return;
-        showToast(message ?? 'Login successful.');
-        await Future.delayed(const Duration(seconds: 1));
-        if (!mounted) return;
-        context.go('/home');
-      } else {
-        showToast(message ?? 'Login failed. Please check your credentials.');
+        if (success) {
+          await AuthSession.instance.updateFromResponse(responseBody);
+          if (!mounted) return;
+          showToast(message ?? 'Login successful.');
+          await Future.delayed(const Duration(seconds: 1));
+          if (!mounted) return;
+          context.go('/home');
+        } else {
+          showToast(message ?? 'Login failed. Please check your credentials.');
+        }
+      } catch (error) {
+        showToast(error.toString());
       }
     });
   }
@@ -156,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: _handleForgotPassword,
                       child: const Text('Forgot password?'),
                     ),
                   ),

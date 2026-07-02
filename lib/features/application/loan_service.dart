@@ -17,12 +17,16 @@ class LoanService {
   Future<http.Response> submitApplication(
     LoanApplicationRequest request,
     String bearerToken,
-  ) {
-    return _post(
-      _applicationUri,
-      request.toJson(),
-      bearerToken,
-    );
+  ) async {
+    try {
+      return await _post(
+        _applicationUri,
+        request.toJson(),
+        bearerToken,
+      );
+    } catch (_) {
+      throw Exception('Unable to submit application. Please check your connection.');
+    }
   }
 
   Future<List<LoanApplication>> fetchApplications(
@@ -33,17 +37,28 @@ class LoanService {
       queryParameters: {'userId': userId},
     );
 
-    final response = await _client.get(
-      uri,
-      headers: {
-        'accept': '*/*',
-        'Authorization': 'Bearer $bearerToken',
-      },
-    );
+    http.Response response;
+    try {
+      response = await _client.get(
+        uri,
+        headers: {
+          'accept': '*/*',
+          'Authorization': 'Bearer $bearerToken',
+        },
+      );
+    } catch (_) {
+      throw Exception('Unable to load applications. Please check your network connection.');
+    }
 
-    final body = jsonDecode(response.body) as List<dynamic>?;
-    if (body == null) {
-      return [];
+    if (response.statusCode != 200) {
+      throw Exception('Unable to load applications. Server returned ${response.statusCode}.');
+    }
+
+    late final List<dynamic> body;
+    try {
+      body = jsonDecode(response.body) as List<dynamic>;
+    } catch (_) {
+      throw Exception('Unable to parse applications response.');
     }
 
     return body
@@ -60,45 +75,61 @@ class LoanService {
       '${AppConfig.baseUrl}/Loan/users/$userId/loan-applications/$applicationId/status',
     );
 
-    final response = await _client.get(
-      uri,
-      headers: {
-        'accept': '*/*',
-        'Authorization': 'Bearer $bearerToken',
-      },
-    );
+    http.Response response;
+    try {
+      response = await _client.get(
+        uri,
+        headers: {
+          'accept': '*/*',
+          'Authorization': 'Bearer $bearerToken',
+        },
+      );
+    } catch (_) {
+      throw Exception('Unable to load application status. Please check your network connection.');
+    }
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception('Unable to load application status. Server returned ${response.statusCode}.');
+    }
+
+    late final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception('Unable to parse application status response.');
+    }
+
     return LoanStatus.fromJson(body);
   }
 
   Future<http.Response> uploadDocuments(
     DocumentUploadRequest request,
-  ) {
+    String bearerToken,
+  ) async {
     final uri = Uri.parse('${AppConfig.baseUrl}/Loan/documents');
 
-    return _post(
-      uri,
-      request.toJson(),
-      '',
-      includeAuthorization: false,
-    );
+    try {
+      return await _post(
+        uri,
+        request.toJson(),
+        bearerToken,
+      );
+    } catch (_) {
+      throw Exception('Unable to upload documents. Please check your connection.');
+    }
   }
 
   Future<http.Response> _post(
     Uri uri,
     Map<String, dynamic> body,
     String bearerToken,
-    {
-    bool includeAuthorization = true,
-  }
   ) {
     final headers = {
       'accept': '*/*',
       'Content-Type': 'application/json',
     };
 
-    if (includeAuthorization && bearerToken.isNotEmpty) {
+    if (bearerToken.isNotEmpty) {
       headers['Authorization'] = 'Bearer $bearerToken';
     }
 

@@ -6,7 +6,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/emi_summary.dart';
 import '../../models/loan_application.dart';
+import '../../core/widgets/app_button.dart';
 import '../application/loan_service.dart';
+import '../../core/auth/auth_session.dart';
 import 'active_applications_section.dart';
 import 'emi_summary_card.dart';
 import 'empty_loan_state.dart';
@@ -16,9 +18,6 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   static const bool _hasPreApprovedOffer = true;
-  static const String _userId = 'd853e508-a345-46aa-8aee-552a3329afaa';
-  static const String _bearerToken =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBhd2FuQGdtYWlsLmNvbSIsIkVtYWlsIjoicGF3YW5AZ21haWwuY29tIiwiSWQiOiJkODUzZTUwOC1hMzQ1LTQ2YWEtOGFlZS01NTJhMzMyOWFmYWEiLCJQaG9uZSI6IjQ3MjM5Mjc5Mjc4MzkyMzgiLCJGaXJzdE5hbWUiOiJQYXdhbiIsIkxhc3ROYW1lIjoiS3VtYWFIciIsIkh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlVzZXIiLCJleHAiOjE3ODI5MzYwNjksImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCJ9.xuazIu5sXyatxU6pTelDaJqNcfTix55PHd4G8EdbUbU';
 
   static final EmiSummary _emiSummary = EmiSummary(
     amount: 15400,
@@ -31,15 +30,31 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final LoanService _loanService = LoanService();
-  late final Future<List<LoanApplication>> _applicationsFuture;
+  late Future<List<LoanApplication>> _applicationsFuture;
 
   @override
   void initState() {
     super.initState();
-    _applicationsFuture = _loanService.fetchApplications(
-      DashboardScreen._userId,
-      DashboardScreen._bearerToken,
+    _applicationsFuture = _loadApplications();
+  }
+
+  Future<List<LoanApplication>> _loadApplications() {
+    return _loanService.fetchApplications(
+      AuthSession.instance.userId,
+      AuthSession.instance.bearerToken,
     );
+  }
+
+  void _showNotifications() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Notification center is not available yet.')),
+    );
+  }
+
+  void _retryLoadApplications() {
+    setState(() {
+      _applicationsFuture = _loadApplications();
+    });
   }
 
   @override
@@ -53,14 +68,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: _showNotifications,
           ),
           IconButton(
             icon: const CircleAvatar(
               radius: 16,
               child: Icon(Icons.person, size: 18),
             ),
-            onPressed: () {},
+            onPressed: () => context.push(AppRoutePaths.profile),
           ),
         ],
       ),
@@ -68,6 +83,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: FutureBuilder<List<LoanApplication>>(
           future: _applicationsFuture,
           builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                children: [
+                  _GreetingHeader(
+                    userName: AuthSession.instance.userName.isNotEmpty
+                        ? AuthSession.instance.userName
+                        : 'User',
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 64, color: Colors.redAccent),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Unable to load applications.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'Please check your connection and try again.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        AppButton(
+                          label: 'Retry',
+                          onPressed: _retryLoadApplications,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+
             final applications = snapshot.data ?? const [];
             final hasApplications = applications.isNotEmpty;
             final hasOffers = DashboardScreen._hasPreApprovedOffer || hasApplications;
@@ -75,7 +133,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                const _GreetingHeader(userName: 'Aarav'),
+                _GreetingHeader(
+                  userName: AuthSession.instance.userName.isNotEmpty
+                      ? AuthSession.instance.userName
+                      : 'User',
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 if (hasOffers) ...[
                   LoanOfferCard(

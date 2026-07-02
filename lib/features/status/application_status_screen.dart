@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/loan_status.dart';
 import '../application/loan_service.dart';
+import '../../core/auth/auth_session.dart';
 
 class ApplicationStatusScreen extends StatefulWidget {
   const ApplicationStatusScreen({super.key, required this.applicationId});
@@ -15,10 +16,6 @@ class ApplicationStatusScreen extends StatefulWidget {
 }
 
 class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
-  static const String _userId = 'd853e508-a345-46aa-8aee-552a3329afaa';
-  static const String _bearerToken =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBhd2FuQGdtYWlsLmNvbSIsIkVtYWlsIjoicGF3YW5AZ21haWwuY29tIiwiSWQiOiJkODUzZTUwOC1hMzQ1LTQ2YWEtOGFlZS01NTJhMzMyOWFmYWEiLCJQaG9uZSI6IjQ3MjM5Mjc5Mjc4MzkyMzgiLCJGaXJzdE5hbWUiOiJQYXdhbiIsIkxhc3ROYW1lIjoiS3VtYWFIciIsIkh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlVzZXIiLCJleHAiOjE3ODI5MzYwNjksImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCJ9.xuazIu5sXyatxU6pTelDaJqNcfTix55PHd4G8EdbUbU';
-
   final LoanService _loanService = LoanService();
   late final Future<LoanStatus> _statusFuture;
 
@@ -35,9 +32,9 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
     }
 
     return _loanService.fetchApplicationStatus(
-      _userId,
+      AuthSession.instance.userId,
       applicationId,
-      _bearerToken,
+      AuthSession.instance.bearerToken,
     );
   }
 

@@ -16,7 +16,7 @@ void main() {
 
     expect(find.text('Loan Tracker'), findsOneWidget);
     expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.text('Phone number'), findsOneWidget);
+    expect(find.text('Email or phone'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Forgot password?'), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);

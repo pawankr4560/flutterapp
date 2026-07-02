@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_session.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
@@ -34,9 +37,19 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _ProfileDetail(title: 'Name', value: _userProfile.name),
+            _ProfileDetail(
+              title: 'Name',
+              value: AuthSession.instance.userName.isNotEmpty
+                  ? AuthSession.instance.userName
+                  : _userProfile.name,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            _ProfileDetail(title: 'Email', value: _userProfile.email),
+            _ProfileDetail(
+              title: 'Email',
+              value: AuthSession.instance.email.isNotEmpty
+                  ? AuthSession.instance.email
+                  : _userProfile.email,
+            ),
             const SizedBox(height: AppSpacing.sm),
             _ProfileDetail(title: 'Phone', value: _userProfile.phone),
             const SizedBox(height: AppSpacing.sm),
@@ -104,29 +117,46 @@ class ProfileScreen extends StatelessWidget {
             _ProfileSettingTile(
               label: 'Notifications',
               value: 'Enabled',
-              onTap: () {},
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notification settings are not available yet.')),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             _ProfileSettingTile(
               label: 'Security',
               value: 'Password set',
-              onTap: () {},
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Security settings are not available yet.')),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             _ProfileSettingTile(
               label: 'KYC documents',
               value: '3 uploaded',
-              onTap: () {},
+              onTap: () => context.push(AppRoutePaths.documents),
             ),
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: 'Edit profile',
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Edit profile is not implemented yet.')),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             AppButton(
               label: 'Logout',
-              onPressed: () {},
+              onPressed: () {
+                final router = GoRouter.of(context);
+                AuthSession.instance.logout().then((_) {
+                  router.go('/login');
+                });
+              },
               variant: AppButtonVariant.secondary,
             ),
           ],
@@ -207,7 +237,14 @@ class _KycDocumentCard extends StatelessWidget {
           ),
           AppButton(
             label: document.actionLabel,
-            onPressed: () {},
+            onPressed: () {
+              final message = document.actionLabel == 'Upload'
+                  ? 'Uploading KYC documents is not available yet.'
+                  : 'Viewing KYC documents is not available yet.';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message)),
+              );
+            },
             variant: AppButtonVariant.secondary,
           ),
         ],

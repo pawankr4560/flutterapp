@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_session.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_button.dart';
@@ -117,34 +118,39 @@ class _SignupScreenState extends State<SignupScreen> with AuthFormMixin<SignupSc
     }
 
     await runAuthRequest(() async {
-      final splitName = name.split(RegExp(r'\s+'));
-      final firstName = splitName.isNotEmpty ? splitName.first : name;
-      final lastName = splitName.length > 1 ? splitName.sublist(1).join(' ') : '';
+      try {
+        final splitName = name.split(RegExp(r'\s+'));
+        final firstName = splitName.isNotEmpty ? splitName.first : name;
+        final lastName = splitName.length > 1 ? splitName.sublist(1).join(' ') : '';
 
-      final request = SignupRequest(
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-        firstName: firstName,
-        lastName: lastName,
-        phone: phoneValue,
-        gender: _gender,
-        address: address,
-      );
+        final request = SignupRequest(
+          email: email,
+          password: password,
+          confirmPassword: confirmPassword,
+          firstName: firstName,
+          lastName: lastName,
+          phone: phoneValue,
+          gender: _gender,
+          address: address,
+        );
 
-      final response = await _authService.signup(request);
-      final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final success = responseBody?['success'] == true;
-      final message = responseBody?['message'] as String?;
+        final response = await _authService.signup(request);
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
+        final success = responseBody?['success'] == true;
+        final message = responseBody?['message'] as String?;
 
-      if (success) {
-        if (!mounted) return;
-        showToast(message ?? 'Signup successful. Please log in.');
-        await Future.delayed(const Duration(seconds: 2));
-        if (!mounted) return;
-        context.push('/login');
-      } else {
-        showToast(message ?? 'Signup failed (${response.statusCode}).');
+        if (success) {
+          await AuthSession.instance.updateFromResponse(responseBody);
+          if (!mounted) return;
+          showToast(message ?? 'Signup successful. Please log in.');
+          await Future.delayed(const Duration(seconds: 2));
+          if (!mounted) return;
+          context.push('/login');
+        } else {
+          showToast(message ?? 'Signup failed (${response.statusCode}).');
+        }
+      } catch (error) {
+        showToast(error.toString());
       }
     });
   }
