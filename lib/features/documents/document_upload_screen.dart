@@ -12,9 +12,15 @@ import '../../core/widgets/app_button.dart';
 import '../../models/document_item.dart';
 import '../application/document_requests.dart';
 import '../application/loan_service.dart';
+import 'cloudinary_service.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
-  const DocumentUploadScreen({super.key});
+  const DocumentUploadScreen({
+    super.key,
+    required this.applicationId,
+  });
+
+  final String? applicationId;
 
   @override
   State<DocumentUploadScreen> createState() => _DocumentUploadScreenState();
@@ -22,6 +28,7 @@ class DocumentUploadScreen extends StatefulWidget {
 
 class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   final LoanService _loanService = LoanService();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
   bool _isSubmitting = false;
 
   List<DocumentItem> _documents = const [
@@ -45,7 +52,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   bool get _canSubmit {
     return _documents.every(
-      (document) => document.status == DocumentUploadStatus.uploaded,
+      (document) =>
+          !document.isRequired ||
+          (document.status == DocumentUploadStatus.uploaded &&
+              document.cloudinaryUrl != null &&
+              document.cloudinaryUrl!.isNotEmpty),
     );
   }
 
@@ -54,13 +65,21 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       document.name,
       status: DocumentUploadStatus.uploading,
       filePath: document.filePath,
+      fileName: document.fileName,
+      cloudinaryUrl: document.cloudinaryUrl,
     );
 
     try {
+      final applicationId = widget.applicationId;
+      if (applicationId == null || applicationId.isEmpty) {
+        throw Exception('Application ID is missing.');
+      }
+
       final result = await FilePicker.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
         allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: true,
       );
 
       if (!mounted) {
@@ -71,20 +90,36 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         _updateDocument(
           document.name,
           status: document.filePath == null
-              ? DocumentUploadStatus.notUploaded
+              ? document.cloudinaryUrl == null
+                  ? DocumentUploadStatus.notUploaded
+                  : DocumentUploadStatus.uploaded
               : DocumentUploadStatus.uploaded,
           filePath: document.filePath,
+          fileName: document.fileName,
+          cloudinaryUrl: document.cloudinaryUrl,
         );
         return;
       }
 
       final selectedFile = result.files.single;
+      final cloudinaryUrl = await _cloudinaryService.uploadDocument(
+        file: selectedFile,
+        applicationId: applicationId,
+        documentType: document.name,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
       _updateDocument(
         document.name,
         status: DocumentUploadStatus.uploaded,
         filePath: selectedFile.path ?? selectedFile.name,
+        fileName: selectedFile.name,
+        cloudinaryUrl: cloudinaryUrl,
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -93,6 +128,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         document.name,
         status: DocumentUploadStatus.failed,
         filePath: document.filePath,
+        fileName: document.fileName,
+        cloudinaryUrl: document.cloudinaryUrl,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
       );
     }
   }
@@ -101,6 +141,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     String name, {
     required DocumentUploadStatus status,
     String? filePath,
+    String? fileName,
+    String? cloudinaryUrl,
   }) {
     setState(() {
       _documents = _documents.map((document) {
@@ -108,23 +150,40 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           return document;
         }
 
-        return document.copyWith(status: status, filePath: filePath);
+        return document.copyWith(
+          status: status,
+          filePath: filePath,
+          fileName: fileName,
+          cloudinaryUrl: cloudinaryUrl,
+        );
       }).toList();
     });
   }
 
   Future<void> _submitApplication() async {
+    final applicationId = widget.applicationId;
+    if (applicationId == null || applicationId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Application ID is missing.')),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
 
     final request = DocumentUploadRequest(
-      applicationId: '2026-GKFIN-00003',
+      applicationId: applicationId,
       documents: _documents
+          .where(
+            (document) =>
+                document.cloudinaryUrl != null && document.cloudinaryUrl!.isNotEmpty,
+          )
           .map(
             (document) => LoanDocument(
               type: document.name,
-              url: document.filePath ?? document.name,
+              url: document.cloudinaryUrl ?? '',
             ),
           )
           .toList(),
@@ -136,7 +195,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         AuthSession.instance.bearerToken,
       );
       final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final success = responseBody?['success'] == true;
+      final success = responseBody?['success'] == true ||
+          (responseBody?['success'] != false &&
+              response.statusCode >= 200 &&
+              response.statusCode < 300);
       final message = responseBody?['message'] as String?;
 
       if (success) {
@@ -144,7 +206,12 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message ?? 'Documents uploaded successfully')),
         );
-        context.push('${AppRoutePaths.status}?applicationId=2026-GKFIN-00003');
+        context.push(
+          Uri(
+            path: AppRoutePaths.status,
+            queryParameters: {'applicationId': applicationId},
+          ).toString(),
+        );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,9 +254,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             ..._documents.map(
               (document) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                child: _DocumentUploadCard(
-                  document: document,
-                  onTap: () => _pickDocument(document),
+                  child: _DocumentUploadCard(
+                    document: document,
+                    onTap: () => _pickDocument(document),
                 ),
               ),
             ),
@@ -246,7 +313,7 @@ class _DocumentUploadCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        document.name,
+                        document.isRequired ? '${document.name} *' : document.name,
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 16,
@@ -286,13 +353,15 @@ class _DocumentUploadCard extends StatelessWidget {
   String get _supportingText {
     switch (document.status) {
       case DocumentUploadStatus.notUploaded:
-        return 'Tap to upload PDF, JPG, or PNG';
+        return document.isRequired
+            ? 'Tap to upload PDF, JPG, or PNG'
+            : 'Optional - tap to upload PDF, JPG, or PNG';
       case DocumentUploadStatus.uploading:
         return 'Uploading...';
       case DocumentUploadStatus.uploaded:
-        return document.filePath == null
+        return document.fileName == null
             ? 'Uploaded'
-            : 'Uploaded - ${_fileNameFromPath(document.filePath!)}';
+            : 'Uploaded - ${document.fileName}';
       case DocumentUploadStatus.failed:
         return 'Upload failed. Tap to retry';
     }
@@ -430,6 +499,3 @@ class _DashedBorderPainter extends CustomPainter {
 const Color _successGreen = Color(0xFF16A34A);
 const Color _successSurface = Color(0xFFEFFAF3);
 
-String _fileNameFromPath(String filePath) {
-  return filePath.split(RegExp(r'[\\/]')).last;
-}

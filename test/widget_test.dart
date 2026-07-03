@@ -8,6 +8,8 @@ import 'package:loan_tracker_application/features/status/application_status_scre
 import 'package:loan_tracker_application/main.dart';
 
 void main() {
+  const testApplicationId = 'TEST-APPLICATION-ID';
+
   testWidgets('Login screen renders expected controls', (
     WidgetTester tester,
   ) async {
@@ -113,15 +115,18 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: DocumentUploadScreen()),
+      const MaterialApp(
+        home: DocumentUploadScreen(applicationId: testApplicationId),
+      ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('PAN card'), findsOneWidget);
-    expect(find.text('Aadhaar card'), findsOneWidget);
+    expect(find.text('PAN card *'), findsOneWidget);
+    expect(find.text('Aadhaar card *'), findsOneWidget);
     expect(find.text('Salary slips'), findsOneWidget);
     expect(find.text('Bank statement'), findsOneWidget);
-    expect(find.text('Tap to upload PDF, JPG, or PNG'), findsNWidgets(4));
+    expect(find.text('Tap to upload PDF, JPG, or PNG'), findsNWidgets(2));
+    expect(find.text('Optional - tap to upload PDF, JPG, or PNG'), findsNWidgets(2));
     expect(find.text('Submit application'), findsOneWidget);
 
     final submitButton = tester.widget<FilledButton>(

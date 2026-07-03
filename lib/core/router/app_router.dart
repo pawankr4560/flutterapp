@@ -7,6 +7,7 @@ import '../../features/auth/login_screen.dart';
 import '../../features/auth/signup_screen.dart';
 import '../../features/calculator/emi_calculator_screen.dart';
 import '../../features/documents/document_upload_screen.dart';
+import '../../features/documents/uploaded_documents_screen.dart';
 import '../../features/home/dashboard_screen.dart';
 import '../../features/home/loans_screen.dart';
 import '../../features/home/payments_screen.dart';
@@ -26,6 +27,7 @@ class AppRoutePaths {
   static const String calculator = '/calculator';
   static const String apply = '/apply';
   static const String documents = '/documents';
+  static const String uploadedDocuments = '/documents/view';
   static const String status = '/status';
 }
 
@@ -37,12 +39,16 @@ GoRouter createAppRouter() {
       final isAuthenticated = AuthSession.instance.isAuthenticated;
       final loggingIn = state.uri.path == AppRoutePaths.login;
       final signingUp = state.uri.path == AppRoutePaths.signup;
+      final hasEmailConfirmationResult =
+          loggingIn && state.uri.queryParameters.containsKey('emailConfirmed');
 
       if (!isAuthenticated && !loggingIn && !signingUp) {
         return AppRoutePaths.login;
       }
 
-      if (isAuthenticated && (loggingIn || signingUp)) {
+      if (isAuthenticated &&
+          (loggingIn || signingUp) &&
+          !hasEmailConfirmationResult) {
         return AppRoutePaths.home;
       }
 
@@ -51,7 +57,14 @@ GoRouter createAppRouter() {
     routes: [
       GoRoute(
         path: AppRoutePaths.login,
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => LoginScreen(
+          emailConfirmed: switch (state.uri.queryParameters['emailConfirmed']) {
+            'true' => true,
+            'false' => false,
+            _ => null,
+          },
+          confirmationMessageId: state.uri.queryParameters['messageId'],
+        ),
       ),
       GoRoute(
         path: AppRoutePaths.signup,
@@ -88,7 +101,15 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: AppRoutePaths.documents,
-        builder: (context, state) => const DocumentUploadScreen(),
+        builder: (context, state) => DocumentUploadScreen(
+          applicationId: state.uri.queryParameters['applicationId'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutePaths.uploadedDocuments,
+        builder: (context, state) => UploadedDocumentsScreen(
+          applicationId: state.uri.queryParameters['applicationId'],
+        ),
       ),
       GoRoute(
         path: AppRoutePaths.status,
