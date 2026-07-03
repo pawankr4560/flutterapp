@@ -103,7 +103,13 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
         AuthSession.instance.bearerToken,
       );
       final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final success = responseBody?['success'] == true;
+      final applicationId = responseBody?['applicationId']?.toString();
+      final success = responseBody?['success'] == true ||
+          (responseBody?['success'] != false &&
+              response.statusCode >= 200 &&
+              response.statusCode < 300 &&
+              applicationId != null &&
+              applicationId.isNotEmpty);
       final message = responseBody?['message'] as String?;
 
       if (success) {
@@ -111,7 +117,12 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message ?? 'Loan application submitted successfully')),
         );
-        context.push('/documents');
+        context.push(
+          Uri(
+            path: '/documents',
+            queryParameters: {'applicationId': applicationId},
+          ).toString(),
+        );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

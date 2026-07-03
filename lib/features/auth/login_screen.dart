@@ -14,7 +14,14 @@ import 'auth_requests.dart';
 import 'auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({
+    super.key,
+    this.emailConfirmed,
+    this.confirmationMessageId,
+  });
+
+  final bool? emailConfirmed;
+  final String? confirmationMessageId;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -36,12 +43,126 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
 
   static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+  @override
+  void initState() {
+    super.initState();
+    _showEmailConfirmationMessage(widget.emailConfirmed);
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.emailConfirmed != widget.emailConfirmed ||
+        oldWidget.confirmationMessageId != widget.confirmationMessageId) {
+      _showEmailConfirmationMessage(widget.emailConfirmed);
+    }
+  }
+
   bool _isEmail(String value) => value.contains('@');
 
   bool _isValidEmail(String value) => _emailRegex.hasMatch(value);
 
-  void _handleForgotPassword() {
-    showToast('Password recovery is not implemented yet. Please contact support.');
+  Future<void> _handleForgotPassword() async {
+    final emailController = TextEditingController(
+      text: _isValidEmail(_usernameController.text.trim())
+          ? _usernameController.text.trim()
+          : '',
+    );
+    String? emailError;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Reset password'),
+              content: AppTextField(
+                controller: emailController,
+                label: 'Email',
+                hintText: 'Enter your registered email',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                prefixIcon: Icons.mail_outline,
+                errorText: emailError,
+                onChanged: (_) {
+                  if (emailError != null) {
+                    setDialogState(() {
+                      emailError = null;
+                    });
+                  }
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final email = emailController.text.trim();
+                    if (!_isValidEmail(email)) {
+                      setDialogState(() {
+                        emailError = 'Enter a valid email address.';
+                      });
+                      return;
+                    }
+
+                    Navigator.of(dialogContext).pop();
+                    await _sendPasswordReset(email);
+                  },
+                  child: const Text('Send link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    emailController.dispose();
+  }
+
+  Future<void> _sendPasswordReset(String email) async {
+    await runAuthRequest(() async {
+      try {
+        final response = await _authService.forgotPassword(
+          ForgotPasswordRequest(email: email),
+        );
+        final responseBody = _tryDecodeMap(response.body);
+        final success = responseBody?['success'] == true ||
+            (responseBody?['success'] != false &&
+                response.statusCode >= 200 &&
+                response.statusCode < 300);
+        final message = responseBody?['message']?.toString();
+
+        if (success) {
+          showToast(message ?? 'Password reset link sent to your email.');
+        } else {
+          showToast(message ?? 'Unable to send password reset link.');
+        }
+      } catch (error) {
+        showToast(error.toString());
+      }
+    });
+  }
+
+  void _showEmailConfirmationMessage(bool? emailConfirmed) {
+    if (emailConfirmed == null) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      showToast(
+        emailConfirmed
+            ? 'Email confirmed successfully. Please login.'
+            : 'Email confirmation failed or link expired.',
+      );
+    });
   }
 
   Future<void> _submitLogin() async {
@@ -80,7 +201,11 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
         final request = LoginRequest(username: username, password: password);
         final response = await _authService.login(request);
         final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-        final success = responseBody?['success'] == true;
+        final success = responseBody?['success'] == true ||
+            (responseBody?['success'] != false &&
+                response.statusCode >= 200 &&
+                response.statusCode < 300 &&
+                _hasUserPayload(responseBody));
         final message = responseBody?['message'] as String?;
 
         if (success) {
@@ -97,6 +222,25 @@ class _LoginScreenState extends State<LoginScreen> with AuthFormMixin<LoginScree
         showToast(error.toString());
       }
     });
+  }
+
+  bool _hasUserPayload(Map<String, dynamic>? responseBody) {
+    if (responseBody == null) {
+      return false;
+    }
+
+    final data = responseBody['data'];
+    return responseBody['user'] is Map<String, dynamic> ||
+        (data is Map<String, dynamic> && data['user'] is Map<String, dynamic>);
+  }
+
+  Map<String, dynamic>? _tryDecodeMap(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

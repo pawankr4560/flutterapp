@@ -11,10 +11,17 @@ class AuthService {
   final http.Client _client;
   final Uri _signupUri = Uri.parse('${AppConfig.baseUrl}/Auth/Signup');
   final Uri _loginUri = Uri.parse('${AppConfig.baseUrl}/Auth/Login');
+  final Uri _forgotPasswordUri = Uri.parse(
+    '${AppConfig.baseUrl}/Auth/ForgotPassword',
+  );
 
   Future<http.Response> signup(SignupRequest request) async {
     try {
-      return await _post(_signupUri, request.toJson());
+      return await _post(
+        _signupUri,
+        request.toJson(),
+        headers: const {'X-Client': 'Flutter'},
+      );
     } catch (error) {
       throw Exception('Signup failed. Please check your network connection.');
     }
@@ -28,12 +35,31 @@ class AuthService {
     }
   }
 
-  Future<http.Response> _post(Uri uri, Map<String, dynamic> body) {
+  Future<http.Response> forgotPassword(ForgotPasswordRequest request) async {
+    try {
+      return await _post(
+        _forgotPasswordUri,
+        request.toJson(),
+        headers: const {'X-Client': 'Flutter'},
+      );
+    } catch (error) {
+      throw Exception(
+        'Unable to send password reset email. Please check your connection.',
+      );
+    }
+  }
+
+  Future<http.Response> _post(
+    Uri uri,
+    Map<String, dynamic> body, {
+    Map<String, String>? headers,
+  }) {
     return _client.post(
       uri,
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json',
+        ...?headers,
       },
       body: jsonEncode(body),
     );
