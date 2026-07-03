@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../core/config/app_config.dart';
 import '../../models/loan_application.dart';
 import '../../models/loan_status.dart';
+import '../../models/uploaded_document.dart';
 import 'document_requests.dart';
 import 'loan_requests.dart';
 
@@ -56,13 +57,24 @@ class LoanService {
 
     late final List<dynamic> body;
     try {
-      body = jsonDecode(response.body) as List<dynamic>;
+      final decoded = jsonDecode(response.body);
+      body = switch (decoded) {
+        {'applications': final List<dynamic> items} => items,
+        {'loanApplications': final List<dynamic> items} => items,
+        {'data': {'applications': final List<dynamic> items}} => items,
+        {'data': {'loanApplications': final List<dynamic> items}} => items,
+        {'data': final List<dynamic> items} => items,
+        List<dynamic> items => items,
+        _ => throw const FormatException(),
+      };
     } catch (_) {
       throw Exception('Unable to parse applications response.');
     }
 
     return body
-        .map((item) => LoanApplication.fromJson(item as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .map(LoanApplication.fromJson)
+        .where((application) => application.id.isNotEmpty)
         .toList();
   }
 
@@ -119,24 +131,70 @@ class LoanService {
     }
   }
 
+  Future<List<UploadedDocument>> fetchDocuments(
+    String applicationId,
+    String bearerToken,
+  ) async {
+    final uri = Uri.parse('${AppConfig.baseUrl}/Loan/$applicationId/documents');
+
+    http.Response response;
+    try {
+      response = await _client.get(
+        uri,
+        headers: _headers(bearerToken),
+      );
+    } catch (_) {
+      throw Exception('Unable to load documents. Please check your connection.');
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('Unable to load documents. Server returned ${response.statusCode}.');
+    }
+
+    final decoded = jsonDecode(response.body);
+    final documents = switch (decoded) {
+      {'documents': final List<dynamic> items} => items,
+      {'data': {'documents': final List<dynamic> items}} => items,
+      {'data': final List<dynamic> items} => items,
+      List<dynamic> items => items,
+      _ => throw Exception('Unable to parse documents response.'),
+    };
+
+    return documents
+        .whereType<Map<String, dynamic>>()
+        .map(UploadedDocument.fromJson)
+        .where((document) => document.url.isNotEmpty)
+        .toList();
+  }
+
   Future<http.Response> _post(
     Uri uri,
     Map<String, dynamic> body,
     String bearerToken,
   ) {
+    return _client.post(
+      uri,
+      headers: _headers(bearerToken, includeJsonContentType: true),
+      body: jsonEncode(body),
+    );
+  }
+
+  Map<String, String> _headers(
+    String bearerToken, {
+    bool includeJsonContentType = false,
+  }) {
     final headers = {
       'accept': '*/*',
-      'Content-Type': 'application/json',
     };
+
+    if (includeJsonContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (bearerToken.isNotEmpty) {
       headers['Authorization'] = 'Bearer $bearerToken';
     }
 
-    return _client.post(
-      uri,
-      headers: headers,
-      body: jsonEncode(body),
-    );
+    return headers;
   }
 }

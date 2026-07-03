@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_button.dart';
 import '../../models/loan_status.dart';
 import '../application/loan_service.dart';
 import '../../core/auth/auth_session.dart';
@@ -95,6 +98,35 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: 'Upload documents',
+                        onPressed: () => context.push(
+                          Uri(
+                            path: AppRoutePaths.documents,
+                            queryParameters: {'applicationId': status.id},
+                          ).toString(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: AppButton(
+                        label: 'View documents',
+                        onPressed: () => context.push(
+                          Uri(
+                            path: AppRoutePaths.uploadedDocuments,
+                            queryParameters: {'applicationId': status.id},
+                          ).toString(),
+                        ),
+                        variant: AppButtonVariant.secondary,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
