@@ -18,14 +18,7 @@ samples, guidance on mobile development, and a full API reference.
 
 ## Configuration
 
-The API base URL is configured using a Dart define flag.
+The API base URL is configured in `lib/core/config/app_config.dart`.
 
-- Default local and production value: `https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api`
-- Override it at build or run time using:
-
-```bash
-flutter run --dart-define=API_BASE_URL=https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api
-flutter build apk --dart-define=API_BASE_URL=https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api
-```
-
-This value is read from `AppConfig.baseUrl` in `lib/core/config/app_config.dart`.
+- Production value: `https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api`
+- This value is read from `AppConfig.baseUrl`.
