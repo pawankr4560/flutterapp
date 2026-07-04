@@ -1,64 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
-import 'package:finhub/core/widgets/app_card.dart';
+import 'package:finhub/core/widgets/app_spacing.dart';
+import 'package:finhub/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:finhub/features/dashboard/presentation/widgets/dashboard_header.dart';
+import 'package:finhub/features/dashboard/presentation/widgets/overview_card.dart';
 
-/// Placeholder dashboard for the first FinHub business overview.
-class DashboardPage extends StatelessWidget {
+/// Dashboard foundation page for FinHub business overview metrics.
+class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
-  static const List<_DashboardModule> _modules = [
-    _DashboardModule('Loans', Icons.account_balance_rounded),
-    _DashboardModule('Bookings', Icons.directions_car_rounded),
-    _DashboardModule('Inventory', Icons.inventory_2_rounded),
-    _DashboardModule('Plots', Icons.map_rounded),
-    _DashboardModule('Dairy', Icons.agriculture_rounded),
-    _DashboardModule('Reports', Icons.bar_chart_rounded),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(dashboardSummaryProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('FinHub')),
       body: SafeArea(
-        child: GridView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: _modules.length,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 220,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.12,
-          ),
-          itemBuilder: (context, index) {
-            final module = _modules[index];
-            return AppCard(
-              onTap: () {},
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(module.icon, color: AppColors.primary, size: 32),
-                  const Spacer(),
-                  Text(module.title, style: AppTextStyles.titleMedium(context)),
-                  const SizedBox(height: 6),
-                  Text('Coming soon', style: AppTextStyles.bodyMedium(context)),
-                ],
-              ),
-            );
-          },
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            const DashboardHeader(),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              "Today's Overview",
+              style: AppTextStyles.titleLarge(context),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isTablet = constraints.maxWidth >= AppSpacing.xxl * 12;
+                final columns = isTablet ? 4 : 2;
+                final spacing = AppSpacing.md;
+                final cardWidth =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    OverviewCard(
+                      width: cardWidth,
+                      title: "Today's Income",
+                      value: _formatCurrency(summary.totalIncome),
+                      icon: Icons.payments_rounded,
+                      color: AppColors.primary,
+                    ),
+                    OverviewCard(
+                      width: cardWidth,
+                      title: 'Pending EMI',
+                      value: summary.pendingEmi.toString(),
+                      icon: Icons.account_balance_wallet_rounded,
+                      color: AppColors.warning,
+                    ),
+                    OverviewCard(
+                      width: cardWidth,
+                      title: 'Bookings',
+                      value: summary.bookings.toString(),
+                      icon: Icons.directions_car_rounded,
+                      color: AppColors.success,
+                    ),
+                    OverviewCard(
+                      width: cardWidth,
+                      title: 'Inventory Alerts',
+                      value: summary.inventoryAlerts.toString(),
+                      icon: Icons.inventory_2_rounded,
+                      color: AppColors.error,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
   }
+
+  String _formatCurrency(int value) {
+    final text = value.toString();
+    final buffer = StringBuffer();
+
+    for (var index = 0; index < text.length; index++) {
+      final remaining = text.length - index;
+      buffer.write(text[index]);
+      if (remaining > 1 && remaining % 2 == 0) {
+        buffer.write(',');
+      }
+    }
+
+    return '₹$buffer';
+  }
 }
-
-/// Dashboard module metadata for placeholder tiles.
-class _DashboardModule {
-  const _DashboardModule(this.title, this.icon);
-
-  final String title;
-  final IconData icon;
-}
-
-
