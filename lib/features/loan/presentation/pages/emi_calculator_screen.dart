@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:finhub/app/router.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_theme.dart';
 import 'package:finhub/core/widgets/app_button.dart';
@@ -97,7 +98,7 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: 'Apply for this loan',
-              onPressed: () => context.push('/apply'),
+              onPressed: () => context.push(AppRoutePaths.apply),
             ),
           ],
         ),
