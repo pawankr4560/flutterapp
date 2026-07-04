@@ -1,64 +1,64 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
-
+/// Reusable FinHub text field with design-system decoration defaults.
 class AppTextField extends StatelessWidget {
   const AppTextField({
     super.key,
-    required this.label,
-    required this.hintText,
-    this.keyboardType,
-    this.textInputAction,
-    this.obscureText = false,
-    this.prefixIcon,
     this.controller,
-    this.errorText,
+    this.hint,
+    this.label,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.obscureText = false,
+    this.validator,
+    this.keyboardType,
+    this.readOnly = false,
     this.enabled = true,
+    this.hintText,
+    this.textInputAction,
+    this.errorText,
     this.onChanged,
   });
 
-  final String label;
-  final String hintText;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final bool obscureText;
-  final IconData? prefixIcon;
   final TextEditingController? controller;
-  final String? errorText;
+  final String? hint;
+  final String? label;
+  final IconData? prefixIcon;
+  final Widget? suffixIcon;
+  final bool obscureText;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final bool readOnly;
   final bool enabled;
+
+  /// Legacy alias used by existing screens during migration.
+  final String? hintText;
+  final TextInputAction? textInputAction;
+  final String? errorText;
   final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    final field = TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       obscureText: obscureText,
+      validator: validator,
+      readOnly: readOnly,
       enabled: enabled,
       onChanged: onChanged,
       decoration: InputDecoration(
+        hintText: hint ?? hintText,
         labelText: label,
-        hintText: hintText,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        border: _border(AppColors.border),
-        enabledBorder: _border(AppColors.border),
-        focusedBorder: _border(AppColors.accent, width: 1.4),
         errorText: errorText,
+        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
+        suffixIcon: suffixIcon,
       ),
     );
-  }
 
-  OutlineInputBorder _border(Color color, {double width = 1}) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: color, width: width),
-    );
+    return field;
   }
 }
+
+
