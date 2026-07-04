@@ -29,7 +29,7 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
       subtitle: '3 Booked Today',
       iconName: 'directions_car',
       hexColor: '#22C55E',
-      isEnabled: true,
+      isEnabled: false,
       routePath: '/car-booking',
     ),
     BusinessModule(
@@ -47,7 +47,7 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
       subtitle: '12 Available',
       iconName: 'home',
       hexColor: '#F59E0B',
-      isEnabled: true,
+      isEnabled: false,
       routePath: '/plot',
     ),
   ];

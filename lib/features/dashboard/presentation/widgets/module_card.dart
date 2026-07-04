@@ -22,11 +22,14 @@ class ModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = _colorFromHex(module.hexColor);
-    final effectiveOnTap = () {
-      onTap?.call();
-      _handleModuleTap(context);
-    };
+    final accentColor =
+        module.isEnabled ? _colorFromHex(module.hexColor) : AppColors.border;
+    final VoidCallback? effectiveOnTap = module.isEnabled
+        ? () {
+            onTap?.call();
+            _handleModuleTap(context);
+          }
+        : null;
 
     return AppCard(
       onTap: effectiveOnTap,
@@ -59,10 +62,10 @@ class ModuleCard extends StatelessWidget {
                               color: accentColor),
                         ),
                         const Spacer(),
-                        _ArrowButton(
-                          color: accentColor,
-                          onTap: effectiveOnTap,
-                        ),
+                        if (module.isEnabled)
+                          _ArrowButton(color: accentColor, onTap: effectiveOnTap)
+                        else
+                          const _ComingSoonBadge(),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -77,7 +80,11 @@ class ModuleCard extends StatelessWidget {
                       module.subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyMedium(context),
+                      style: AppTextStyles.bodyMedium(context).copyWith(
+                        color: module.isEnabled
+                            ? AppColors.textSecondary
+                            : AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -107,6 +114,8 @@ class ModuleCard extends StatelessWidget {
   }
 
   void _handleModuleTap(BuildContext context) {
+    if (!module.isEnabled) return;
+
     const routableModules = {
       AppRoutes.loans,
       AppRoutes.inventory,
@@ -115,6 +124,32 @@ class ModuleCard extends StatelessWidget {
 
     if (!routableModules.contains(module.routePath)) return;
     context.push(module.routePath);
+  }
+}
+
+/// Badge for modules that are visible but not yet available.
+class _ComingSoonBadge extends StatelessWidget {
+  const _ComingSoonBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        'Coming soon',
+        style: AppTextStyles.bodySmall(context).copyWith(
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
   }
 }
 

@@ -5,7 +5,7 @@ import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/features/dashboard/domain/entities/business_module.dart';
 import 'package:finhub/features/dashboard/presentation/widgets/module_card.dart';
 
-/// Responsive quick modules grid for enabled business modules.
+/// Responsive quick modules grid for business modules.
 class QuickActionGrid extends StatelessWidget {
   const QuickActionGrid({
     super.key,
@@ -18,9 +18,6 @@ class QuickActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabledModules =
-        modules.where((module) => module.isEnabled).toList(growable: false);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -38,7 +35,7 @@ class QuickActionGrid extends StatelessWidget {
               spacing: spacing,
               runSpacing: spacing,
               children: [
-                for (final module in enabledModules)
+                for (final module in modules)
                   SizedBox(
                     width: itemWidth,
                     child: ModuleCard(
