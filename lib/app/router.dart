@@ -21,7 +21,7 @@ class AppRoutePaths {
 
   static const String login = '/login';
   static const String signup = '/signup';
-  static const String home = '/home';
+  static const String home = AppRoutes.dashboard;
   static const String loans = '/loans';
   static const String payments = '/payments';
   static const String profile = '/profile';
