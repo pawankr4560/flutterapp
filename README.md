@@ -18,7 +18,19 @@ samples, guidance on mobile development, and a full API reference.
 
 ## Configuration
 
-The API base URL is configured in `lib/core/config/app_config.dart`.
+The API base URL is configured in `lib/core/constants/app_config.dart`.
 
-- Production value: `https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api`
-- This value is read from `AppConfig.baseUrl`.
+- Default API URL: `https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api`
+- Direct override: `--dart-define=API_BASE_URL=https://example.com/api`
+- Environment selection: `--dart-define=APP_ENV=dev|staging|prod`
+- Per-environment overrides:
+  - `--dart-define=DEV_API_BASE_URL=https://dev.example.com/api`
+  - `--dart-define=STAGING_API_BASE_URL=https://staging.example.com/api`
+  - `--dart-define=PROD_API_BASE_URL=https://api.example.com`
+
+Cloudinary defaults are intentionally left unchanged for this environment:
+
+- `CLOUDINARY_CLOUD_NAME=lawxbyrf`
+- `CLOUDINARY_UPLOAD_PRESET=upload_image`
+ 
+These values are unsigned-upload identifiers, not application secrets.
