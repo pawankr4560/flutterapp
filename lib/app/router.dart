@@ -2,6 +2,9 @@ import 'package:go_router/go_router.dart';
 
 import 'package:finhub/features/auth/presentation/pages/login_page.dart';
 import 'package:finhub/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:finhub/features/dairy/presentation/pages/milk_directory_page.dart';
+import 'package:finhub/features/inventory/presentation/pages/inventory_directory_page.dart';
+import 'package:finhub/features/loan/presentation/pages/loan_directory_page.dart';
 import 'package:finhub/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:finhub/features/splash/presentation/pages/splash_page.dart';
 
@@ -13,6 +16,9 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String dashboard = '/dashboard';
+  static const String loans = '/loans';
+  static const String inventory = '/inventory';
+  static const String dairy = '/dairy';
 }
 
 /// Legacy route paths still used by migrated feature screens.
@@ -56,7 +62,21 @@ final GoRouter appRouter = GoRouter(
       name: 'dashboard',
       builder: (context, state) => const DashboardPage(),
     ),
+    GoRoute(
+      path: AppRoutes.loans,
+      name: 'loans',
+      builder: (context, state) => const LoanDirectoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.inventory,
+      name: 'inventory',
+      builder: (context, state) => const InventoryDirectoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.dairy,
+      name: 'dairy',
+      builder: (context, state) => const MilkDirectoryPage(),
+    ),
   ],
 );
-
 

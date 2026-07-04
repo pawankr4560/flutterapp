@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
+import 'package:finhub/app/router.dart';
 import 'package:finhub/features/dashboard/domain/entities/business_module.dart';
-import 'package:finhub/features/dairy/presentation/pages/milk_directory_page.dart';
-import 'package:finhub/features/inventory/presentation/pages/inventory_directory_page.dart';
-import 'package:finhub/features/loan/presentation/pages/loan_directory_page.dart';
 
 /// Premium dashboard card for a single enabled business module.
 class ModuleCard extends StatelessWidget {
@@ -108,15 +107,14 @@ class ModuleCard extends StatelessWidget {
   }
 
   void _handleModuleTap(BuildContext context) {
-    final page = switch (module.id) {
-      'loan' => const LoanDirectoryPage(),
-      'inventory' => const InventoryDirectoryPage(),
-      'dairy' => const MilkDirectoryPage(),
-      _ => null,
+    const routableModules = {
+      AppRoutes.loans,
+      AppRoutes.inventory,
+      AppRoutes.dairy,
     };
 
-    if (page == null) return;
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+    if (!routableModules.contains(module.routePath)) return;
+    context.push(module.routePath);
   }
 }
 
