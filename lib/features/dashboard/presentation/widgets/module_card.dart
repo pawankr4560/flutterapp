@@ -6,6 +6,7 @@ import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/features/dashboard/domain/entities/business_module.dart';
+import 'package:finhub/features/dairy/presentation/pages/milk_directory_page.dart';
 import 'package:finhub/features/inventory/presentation/pages/inventory_directory_page.dart';
 import 'package:finhub/features/loan/presentation/pages/loan_directory_page.dart';
 
@@ -110,6 +111,7 @@ class ModuleCard extends StatelessWidget {
     final page = switch (module.id) {
       'loan' => const LoanDirectoryPage(),
       'inventory' => const InventoryDirectoryPage(),
+      'dairy' => const MilkDirectoryPage(),
       _ => null,
     };
 

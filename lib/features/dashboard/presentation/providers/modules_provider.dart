@@ -47,7 +47,7 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
       subtitle: '12 Available',
       iconName: 'home',
       hexColor: '#F59E0B',
-      isEnabled: false,
+      isEnabled: true,
       routePath: '/plot',
     ),
   ];

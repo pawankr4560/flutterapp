@@ -44,7 +44,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
     final costPrice = double.tryParse(_costController.text) ?? 0;
     final sellingPrice = double.tryParse(_sellingController.text) ?? 0;
     final netProfit = sellingPrice - costPrice;
-    final margin = sellingPrice <= 0 ? 0 : netProfit / sellingPrice * 100;
+    final margin = sellingPrice <= 0 ? 0.0 : netProfit / sellingPrice * 100;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Add Product')),
