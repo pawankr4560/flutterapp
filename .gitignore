@@ -32,6 +32,8 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+/build_log*.txt
+/flutter_build*.txt
 
 # Symbolication related
 app.*.symbols
