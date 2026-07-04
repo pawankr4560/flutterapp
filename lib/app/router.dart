@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:finhub/features/auth/presentation/pages/login_page.dart';
+import 'package:finhub/features/auth/presentation/pages/signup_page.dart';
 import 'package:finhub/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:finhub/features/dairy/presentation/pages/milk_directory_page.dart';
 import 'package:finhub/features/inventory/presentation/pages/inventory_directory_page.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
+  static const String signup = '/signup';
   static const String dashboard = '/dashboard';
   static const String loans = '/loans';
   static const String inventory = '/inventory';
@@ -26,7 +28,7 @@ class AppRoutePaths {
   const AppRoutePaths._();
 
   static const String login = '/login';
-  static const String signup = '/signup';
+  static const String signup = AppRoutes.signup;
   static const String home = AppRoutes.dashboard;
   static const String loans = '/loans';
   static const String payments = '/payments';
@@ -58,6 +60,11 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const LoginPage(),
     ),
     GoRoute(
+      path: AppRoutes.signup,
+      name: 'signup',
+      builder: (context, state) => const SignupPage(),
+    ),
+    GoRoute(
       path: AppRoutes.dashboard,
       name: 'dashboard',
       builder: (context, state) => const DashboardPage(),
@@ -79,4 +86,3 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
-
