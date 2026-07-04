@@ -109,6 +109,7 @@ class ModuleCard extends StatelessWidget {
       'directions_car' => Icons.directions_car_rounded,
       'water_drop' => Icons.water_drop_rounded,
       'home' => Icons.home_rounded,
+      'agriculture' => Icons.agriculture_rounded,
       _ => Icons.apps_rounded,
     };
   }
@@ -119,7 +120,10 @@ class ModuleCard extends StatelessWidget {
     const routableModules = {
       AppRoutes.loans,
       AppRoutes.inventory,
+      AppRoutes.carBooking,
       AppRoutes.dairy,
+      AppRoutes.plot,
+      AppRoutes.agriculturePestiside,
     };
 
     if (!routableModules.contains(module.routePath)) return;

@@ -142,7 +142,7 @@ class LoanDetailPage extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: transactions.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 const Divider(height: 1, color: AppColors.border),
             itemBuilder: (_, index) =>
                 _transactionTile(context, customer, transactions[index]),

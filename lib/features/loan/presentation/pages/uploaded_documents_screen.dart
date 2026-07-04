@@ -72,7 +72,7 @@ class _UploadedDocumentsScreenState extends State<UploadedDocumentsScreen> {
             return ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: documents.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 return _DocumentCard(document: documents[index]);
               },
@@ -107,7 +107,7 @@ class _DocumentCard extends StatelessWidget {
                 document.url,
                 height: 180,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _PreviewFallback(),
+                errorBuilder: (_, _, _) => const _PreviewFallback(),
               ),
             )
           else

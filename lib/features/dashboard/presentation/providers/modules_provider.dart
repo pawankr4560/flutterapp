@@ -29,7 +29,7 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
       subtitle: '3 Booked Today',
       iconName: 'directions_car',
       hexColor: '#22C55E',
-      isEnabled: false,
+      isEnabled: true,
       routePath: '/car-booking',
     ),
     BusinessModule(
@@ -47,8 +47,17 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
       subtitle: '12 Available',
       iconName: 'home',
       hexColor: '#F59E0B',
-      isEnabled: false,
+      isEnabled: true,
       routePath: '/plot',
+    ),
+    BusinessModule(
+      id: 'agriculture_pestiside',
+      title: 'Agriculture',
+      subtitle: 'Fields & Stock',
+      iconName: 'agriculture',
+      hexColor: '#16A34A',
+      isEnabled: true,
+      routePath: '/agriculture-pestiside',
     ),
   ];
 });

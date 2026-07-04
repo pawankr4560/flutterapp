@@ -13,6 +13,7 @@ import 'package:finhub/features/dashboard/presentation/widgets/dashboard_header.
 import 'package:finhub/features/dashboard/presentation/widgets/overview_card.dart';
 import 'package:finhub/features/dashboard/presentation/widgets/quick_action_grid.dart';
 import 'package:finhub/features/dashboard/presentation/widgets/recent_activity_list.dart';
+import 'package:finhub/features/profile/presentation/pages/profile_screen.dart';
 
 /// Dashboard foundation page for FinHub business overview metrics.
 class DashboardPage extends ConsumerWidget {
@@ -93,7 +94,7 @@ class DashboardPage extends ConsumerWidget {
             ),
           1 => const _DashboardPlaceholder(title: 'Reports Screen Coming Soon'),
           2 => const _DashboardPlaceholder(title: 'Alerts Screen Coming Soon'),
-          _ => const _DashboardPlaceholder(title: 'Profile Screen Coming Soon'),
+          _ => const ProfileScreen(),
         },
       ),
     );

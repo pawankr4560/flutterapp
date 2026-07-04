@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
-import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
@@ -21,77 +20,90 @@ class AddCollectionPage extends ConsumerStatefulWidget {
 
 class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
   final _formKey = GlobalKey<FormState>();
-  final _farmerController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _fatController = TextEditingController();
-  final _rateController = TextEditingController();
+  final _rateController = TextEditingController(text: '38');
+  String? _farmerName;
   String _shift = 'Morning';
+  double _quantity = 12;
+  double _fat = 4.5;
+
+  double get _rate => double.tryParse(_rateController.text) ?? 0;
+
+  double get _amountPayable => _quantity * _rate;
+
+  @override
+  void initState() {
+    super.initState();
+    _rateController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
-    _farmerController.dispose();
-    _quantityController.dispose();
-    _fatController.dispose();
     _rateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final quantity = double.tryParse(_quantityController.text) ?? 0;
-    final rate = double.tryParse(_rateController.text) ?? 0;
-    final payout = quantity * rate;
+    final farmers = _farmerNames(ref.watch(dairyProvider));
+    _farmerName ??= farmers.first;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Collection')),
+      appBar: AppBar(title: const Text('Add collection')),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              AppTextField(
-                controller: _farmerController,
-                labelText: 'Farmer Name',
-                prefixIcon: Icons.person_outline_rounded,
-                validator: _required,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              _ShiftDropdown(
-                  value: _shift,
-                  onChanged: (value) => setState(() => _shift = value)),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _quantityController,
-                labelText: 'Quantity in Liters',
-                prefixIcon: Icons.water_drop_outlined,
-                keyboardType: TextInputType.number,
-                validator: _positiveNumber,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _fatController,
-                labelText: 'Fat Percentage',
-                prefixIcon: Icons.percent_rounded,
-                keyboardType: TextInputType.number,
-                validator: _positiveNumber,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _rateController,
-                labelText: 'Rate Per Liter (Rs.)',
-                prefixIcon: Icons.currency_rupee_rounded,
-                keyboardType: TextInputType.number,
-                validator: _positiveNumber,
-                onChanged: (_) => setState(() {}),
+              _FieldLabel(label: 'Farmer'),
+              const SizedBox(height: AppSpacing.xs),
+              _FarmerDropdown(
+                value: _farmerName!,
+                farmers: farmers,
+                onChanged: (value) => setState(() => _farmerName = value),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _PayoutCard(amount: payout),
+              _FieldLabel(label: 'Shift'),
+              const SizedBox(height: AppSpacing.xs),
+              _ShiftSelector(
+                selectedShift: _shift,
+                onChanged: (shift) => setState(() => _shift = shift),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _ValueSlider(
+                label: 'Quantity (litres)',
+                valueText: '${_quantity.toStringAsFixed(1)} L',
+                value: _quantity,
+                min: 1,
+                max: 30,
+                divisions: 58,
+                onChanged: (value) => setState(() => _quantity = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _ValueSlider(
+                label: 'Fat content (%)',
+                valueText: '${_fat.toStringAsFixed(1)}%',
+                value: _fat,
+                min: 3,
+                max: 8,
+                divisions: 50,
+                onChanged: (value) => setState(() => _fat = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _FieldLabel(label: 'Rate per litre (Rs.)'),
+              const SizedBox(height: AppSpacing.xs),
+              AppTextField(
+                controller: _rateController,
+                hintText: 'Rate per litre',
+                keyboardType: TextInputType.number,
+                validator: _positiveNumber,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _PayableBanner(amount: _amountPayable),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
                 text: 'Save Entry',
-                icon: Icons.check_circle_outline_rounded,
+                icon: Icons.check_rounded,
                 onPressed: _submit,
               ),
             ],
@@ -101,26 +113,25 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
     );
   }
 
+  List<String> _farmerNames(List<MilkCollectionLog> logs) {
+    final names = logs.map((log) => log.farmerName).toSet().toList()..sort();
+    return names.isEmpty ? ['Suresh Patel'] : names;
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final now = DateTime.now();
     final log = MilkCollectionLog(
       id: 'milk-log-${now.microsecondsSinceEpoch}',
-      farmerName: _farmerController.text.trim(),
+      farmerName: _farmerName!,
       shift: _shift,
-      quantityInLiters: double.parse(_quantityController.text),
-      fatPercentage: double.parse(_fatController.text),
-      ratePerLiter: double.parse(_rateController.text),
+      quantityInLiters: _quantity,
+      fatPercentage: _fat,
+      ratePerLiter: _rate,
       date: now,
     );
     ref.read(dairyProvider.notifier).addLog(log);
     Navigator.of(context).pop();
-  }
-
-  String? _required(String? value) {
-    return value == null || value.trim().isEmpty
-        ? 'This field is required'
-        : null;
   }
 
   String? _positiveNumber(String? value) {
@@ -129,19 +140,39 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
   }
 }
 
-class _ShiftDropdown extends StatelessWidget {
-  const _ShiftDropdown({required this.value, required this.onChanged});
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: AppTextStyles.bodyLarge(context).copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _FarmerDropdown extends StatelessWidget {
+  const _FarmerDropdown({
+    required this.value,
+    required this.farmers,
+    required this.onChanged,
+  });
 
   final String value;
+  final List<String> farmers;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
-        labelText: 'Shift',
-        prefixIcon: const Icon(Icons.schedule_rounded),
         filled: true,
         fillColor: AppColors.surface,
         border: _border(AppColors.border),
@@ -149,11 +180,13 @@ class _ShiftDropdown extends StatelessWidget {
         focusedBorder: _border(AppColors.primary),
       ),
       style: AppTextStyles.bodyLarge(context),
-      items: const [
-        DropdownMenuItem(value: 'Morning', child: Text('Morning')),
-        DropdownMenuItem(value: 'Evening', child: Text('Evening')),
+      items: [
+        for (final farmer in farmers)
+          DropdownMenuItem(value: farmer, child: Text(farmer)),
       ],
-      onChanged: (value) => value == null ? null : onChanged(value),
+      onChanged: (value) {
+        if (value != null) onChanged(value);
+      },
     );
   }
 
@@ -165,31 +198,110 @@ class _ShiftDropdown extends StatelessWidget {
   }
 }
 
-class _PayoutCard extends StatelessWidget {
-  const _PayoutCard({required this.amount});
+class _ShiftSelector extends StatelessWidget {
+  const _ShiftSelector({required this.selectedShift, required this.onChanged});
+
+  final String selectedShift;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final shift in const ['Morning', 'Evening']) ...[
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => onChanged(shift),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: selectedShift == shift
+                    ? AppColors.primary.withValues(alpha: 0.12)
+                    : AppColors.surface,
+                foregroundColor: AppColors.textPrimary,
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.large),
+                ),
+                textStyle: AppTextStyles.titleMedium(context),
+              ),
+              child: Text(shift),
+            ),
+          ),
+          if (shift == 'Morning') const SizedBox(width: AppSpacing.sm),
+        ],
+      ],
+    );
+  }
+}
+
+class _ValueSlider extends StatelessWidget {
+  const _ValueSlider({
+    required this.label,
+    required this.valueText,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String valueText;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _FieldLabel(label: label)),
+            Text(valueText, style: AppTextStyles.titleMedium(context)),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _PayableBanner extends StatelessWidget {
+  const _PayableBanner({required this.amount});
 
   final double amount;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(AppRadius.large),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.payments_rounded, color: AppColors.secondary),
-          const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Estimated Payout', style: AppTextStyles.bodyMedium(context)),
-                const SizedBox(height: AppSpacing.xxs),
-                Text('₹${amount.toStringAsFixed(2)}',
-                  style: AppTextStyles.titleLarge(context).copyWith(
-                    color: AppColors.success,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Amount payable',
+              style: AppTextStyles.titleMedium(context).copyWith(
+                color: AppColors.success,
+              ),
+            ),
+          ),
+          Text(
+            'Rs. ${amount.toStringAsFixed(0)}',
+            style: AppTextStyles.titleLarge(context).copyWith(
+              color: AppColors.success,
             ),
           ),
         ],

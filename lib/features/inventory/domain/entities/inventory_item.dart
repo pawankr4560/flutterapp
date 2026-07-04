@@ -19,4 +19,16 @@ class InventoryItem {
   final double sellingPrice;
 
   bool get isLowStock => currentStock <= lowStockThreshold;
+
+  bool get isOutOfStock => currentStock == 0;
+
+  String get stockStatus {
+    if (isOutOfStock) {
+      return 'Out of stock';
+    }
+    if (isLowStock) {
+      return 'Low stock';
+    }
+    return 'In stock';
+  }
 }

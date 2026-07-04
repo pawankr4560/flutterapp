@@ -128,6 +128,12 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.md),
+                AppButton(
+                  label: 'Go to dashboard',
+                  onPressed: () => context.go(AppRoutePaths.home),
+                  variant: AppButtonVariant.secondary,
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   'Progress timeline',

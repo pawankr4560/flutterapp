@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
-import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
@@ -11,7 +10,7 @@ import 'package:finhub/core/widgets/primary_button.dart';
 import 'package:finhub/features/inventory/domain/entities/inventory_item.dart';
 import 'package:finhub/features/inventory/presentation/providers/inventory_provider.dart';
 
-/// Form page for adding a new product with live profit calculation.
+/// Form page for adding a new product to inventory.
 class AddProductPage extends ConsumerStatefulWidget {
   const AddProductPage({super.key});
 
@@ -22,87 +21,71 @@ class AddProductPage extends ConsumerStatefulWidget {
 class _AddProductPageState extends ConsumerState<AddProductPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _categoryController = TextEditingController();
-  final _stockController = TextEditingController();
-  final _thresholdController = TextEditingController();
-  final _costController = TextEditingController();
-  final _sellingController = TextEditingController();
+  final _unitPriceController = TextEditingController(text: '420');
+  String _category = 'Raw materials';
+  double _quantity = 80;
+  double _threshold = 20;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _categoryController.dispose();
-    _stockController.dispose();
-    _thresholdController.dispose();
-    _costController.dispose();
-    _sellingController.dispose();
+    _unitPriceController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final costPrice = double.tryParse(_costController.text) ?? 0;
-    final sellingPrice = double.tryParse(_sellingController.text) ?? 0;
-    final netProfit = sellingPrice - costPrice;
-    final margin = sellingPrice <= 0 ? 0.0 : netProfit / sellingPrice * 100;
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Product')),
+      appBar: AppBar(title: const Text('Add product')),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
+              _FieldLabel(label: 'Product name'),
+              const SizedBox(height: AppSpacing.xs),
               AppTextField(
                 controller: _nameController,
-                labelText: 'Product Name',
-                prefixIcon: Icons.inventory_2_outlined,
+                hintText: 'e.g. Cement 50kg bag',
                 validator: _required,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _categoryController,
-                labelText: 'Category',
-                prefixIcon: Icons.category_outlined,
-                validator: _required,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _stockController,
-                labelText: 'Current Stock',
-                prefixIcon: Icons.storefront_outlined,
-                keyboardType: TextInputType.number,
-                validator: _nonNegativeInt,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _thresholdController,
-                labelText: 'Low Stock Threshold',
-                prefixIcon: Icons.warning_amber_rounded,
-                keyboardType: TextInputType.number,
-                validator: _nonNegativeInt,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _costController,
-                labelText: 'Cost Price (Rs.)',
-                prefixIcon: Icons.currency_rupee_rounded,
-                keyboardType: TextInputType.number,
-                validator: _positiveNumber,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              AppTextField(
-                controller: _sellingController,
-                labelText: 'Selling Price (Rs.)',
-                prefixIcon: Icons.sell_outlined,
-                keyboardType: TextInputType.number,
-                validator: _positiveNumber,
-                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _ProfitMatrix(netProfit: netProfit, margin: margin),
+              _FieldLabel(label: 'Category'),
+              const SizedBox(height: AppSpacing.xs),
+              _CategoryDropdown(
+                value: _category,
+                onChanged: (value) => setState(() => _category = value),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _ValueSlider(
+                label: 'Quantity in stock',
+                value: _quantity,
+                min: 0,
+                max: 200,
+                divisions: 200,
+                valueText: _quantity.round().toString(),
+                onChanged: (value) => setState(() => _quantity = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _ValueSlider(
+                label: 'Reorder threshold',
+                value: _threshold,
+                min: 0,
+                max: 100,
+                divisions: 100,
+                valueText: _threshold.round().toString(),
+                onChanged: (value) => setState(() => _threshold = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _FieldLabel(label: 'Unit price (Rs.)'),
+              const SizedBox(height: AppSpacing.xs),
+              AppTextField(
+                controller: _unitPriceController,
+                hintText: 'Unit price',
+                keyboardType: TextInputType.number,
+                validator: _positiveNumber,
+              ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
                 text: 'Add Product',
@@ -119,14 +102,15 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final now = DateTime.now();
+    final unitPrice = double.parse(_unitPriceController.text);
     final item = InventoryItem(
       id: 'item-${now.microsecondsSinceEpoch}',
       name: _nameController.text.trim(),
-      category: _categoryController.text.trim(),
-      currentStock: int.parse(_stockController.text),
-      lowStockThreshold: int.parse(_thresholdController.text),
-      costPrice: double.parse(_costController.text),
-      sellingPrice: double.parse(_sellingController.text),
+      category: _category,
+      currentStock: _quantity.round(),
+      lowStockThreshold: _threshold.round(),
+      costPrice: unitPrice,
+      sellingPrice: unitPrice,
     );
     ref.read(inventoryProvider.notifier).addItem(item);
     Navigator.of(context).pop();
@@ -138,62 +122,114 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
         : null;
   }
 
-  String? _nonNegativeInt(String? value) {
-    final number = int.tryParse(value ?? '');
-    return number == null || number < 0 ? 'Enter a valid stock value' : null;
-  }
-
   String? _positiveNumber(String? value) {
     final number = double.tryParse(value ?? '');
     return number == null || number <= 0 ? 'Enter a valid price' : null;
   }
 }
 
-class _ProfitMatrix extends StatelessWidget {
-  const _ProfitMatrix({required this.netProfit, required this.margin});
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.label});
 
-  final double netProfit;
-  final double margin;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = netProfit > 0;
-    final valueColor = isPositive ? AppColors.success : AppColors.error;
-
-    return AppCard(
-      backgroundColor: AppColors.primary.withValues(alpha: 0.06),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: valueColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.large),
-            ),
-            child: Icon(Icons.trending_up_rounded, color: valueColor),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Live Profit Matrix', style: AppTextStyles.titleMedium(context)),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Net Profit: Rs. ${netProfit.toStringAsFixed(2)}',
-                  style: AppTextStyles.bodyMedium(context).copyWith(
-                    color: valueColor,
-                  ),
-                ),
-                Text(
-                  'Profit Margin: ${margin.toStringAsFixed(2)}%',
-                  style: AppTextStyles.bodyMedium(context),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Text(
+      label,
+      style: AppTextStyles.bodyLarge(context).copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
+}
+
+class _CategoryDropdown extends StatelessWidget {
+  const _CategoryDropdown({required this.value, required this.onChanged});
+
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  static const List<String> _categories = [
+    'Raw materials',
+    'Plumbing',
+    'Finishing',
+    'Electrical',
+    'Tools',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: _inputDecoration(),
+      style: AppTextStyles.bodyLarge(context),
+      items: [
+        for (final category in _categories)
+          DropdownMenuItem(value: category, child: Text(category)),
+      ],
+      onChanged: (value) {
+        if (value != null) onChanged(value);
+      },
+    );
+  }
+}
+
+class _ValueSlider extends StatelessWidget {
+  const _ValueSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.valueText,
+    required this.onChanged,
+  });
+
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String valueText;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _FieldLabel(label: label)),
+            Text(valueText, style: AppTextStyles.titleMedium(context)),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+InputDecoration _inputDecoration() {
+  return InputDecoration(
+    filled: true,
+    fillColor: AppColors.surface,
+    border: _border(AppColors.border),
+    enabledBorder: _border(AppColors.border),
+    focusedBorder: _border(AppColors.primary),
+  );
+}
+
+OutlineInputBorder _border(Color color) {
+  return OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AppRadius.large),
+    borderSide: BorderSide(color: color),
+  );
 }

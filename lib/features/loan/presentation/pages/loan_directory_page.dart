@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:finhub/app/router.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/features/loan/domain/entities/loan_customer.dart';
-import 'package:finhub/features/loan/presentation/pages/add_loan_page.dart';
 import 'package:finhub/features/loan/presentation/pages/loan_detail_page.dart';
 import 'package:finhub/features/loan/presentation/providers/loan_provider.dart';
 import 'package:finhub/features/loan/presentation/widgets/customer_loan_card.dart';
@@ -64,11 +65,7 @@ class LoanDirectoryPage extends ConsumerWidget {
   }
 
   void _openAddLoan(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const AddLoanPage(),
-      ),
-    );
+    context.push(AppRoutePaths.apply);
   }
 
   void _openLoanDetail(BuildContext context, LoanCustomer customer) {

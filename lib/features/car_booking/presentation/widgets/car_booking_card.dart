@@ -4,17 +4,17 @@ import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
-import 'package:finhub/features/inventory/domain/entities/inventory_item.dart';
+import 'package:finhub/features/car_booking/domain/entities/vehicle.dart';
 
-/// Compact product stock row with status badge.
-class InventoryItemCard extends StatelessWidget {
-  const InventoryItemCard({super.key, required this.item});
+/// Compact card row for a vehicle in the rental fleet.
+class CarBookingCard extends StatelessWidget {
+  const CarBookingCard({super.key, required this.vehicle});
 
-  final InventoryItem item;
+  final Vehicle vehicle;
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(item.stockStatus);
+    final statusColor = _statusColor(vehicle.status);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -29,31 +29,35 @@ class InventoryItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name, style: AppTextStyles.titleMedium(context)),
+                Text(vehicle.model, style: AppTextStyles.titleMedium(context)),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  '${item.currentStock} in stock - '
-                  'Rs. ${item.sellingPrice.toStringAsFixed(0)}/unit',
+                  vehicle.registrationNumber,
                   style: AppTextStyles.bodyMedium(context).copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Rs. ${vehicle.dailyRate.toStringAsFixed(0)}/day',
+                  style: AppTextStyles.titleMedium(context),
+                ),
               ],
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          _StatusBadge(label: item.stockStatus, color: color),
+          _StatusBadge(label: vehicle.status, color: statusColor),
         ],
       ),
     );
   }
 
   Color _statusColor(String status) {
-    return switch (status) {
-      'In stock' => AppColors.success,
-      'Low stock' => AppColors.warning,
-      'Out of stock' => AppColors.error,
+    return switch (status.toLowerCase()) {
+      'available' => AppColors.success,
+      'booked' => AppColors.warning,
+      'maintenance' => AppColors.error,
       _ => AppColors.primary,
     };
   }

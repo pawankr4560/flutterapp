@@ -1,13 +1,17 @@
 # Car Booking Feature
 
 ## Purpose
-Reserved for car booking workflows.
+Owns car rental booking workflows for FinHub.
 
 ## Responsibilities
-- Own car booking UI, use cases, entities, repositories, and data sources.
+- Define car booking entities.
+- Provide booking directory state through Riverpod providers.
+- Display active and completed bookings with revenue metrics.
 
 ## What Belongs Here
-- Booking pages, widgets, providers, services, use cases, models, and repositories.
+- Car booking-specific entities such as `CarBooking`.
+- Car booking providers such as `carBookingProvider`.
+- Booking directory pages, widgets, services, use cases, models, and repositories.
 
 ## What Should NOT Be Placed Here
-- Loan, inventory, dairy, plot, or shared platform logic.
+- Loan, payment, inventory, dairy, plot, or shared platform logic.

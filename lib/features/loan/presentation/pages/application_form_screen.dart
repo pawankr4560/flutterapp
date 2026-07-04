@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:finhub/app/router.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_theme.dart';
@@ -90,10 +91,13 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
         panNumber: _formData['panNumber']?.toString() ?? '',
         employmentType: _formData['employmentType']?.toString() ?? '',
         employerName: _formData['employerName']?.toString() ?? '',
-        monthlyIncome: int.tryParse(_formData['monthlyIncome']?.toString() ?? '') ?? 0,
-        workExperience: int.tryParse(_formData['workExperience']?.toString() ?? '') ?? 0,
+        monthlyIncome:
+            int.tryParse(_formData['monthlyIncome']?.toString() ?? '') ?? 0,
+        workExperience:
+            int.tryParse(_formData['workExperience']?.toString() ?? '') ?? 0,
         loanType: _formData['loanType']?.toString() ?? '',
-        amountRequested: int.tryParse(_formData['amountRequested']?.toString() ?? '') ?? 0,
+        amountRequested:
+            int.tryParse(_formData['amountRequested']?.toString() ?? '') ?? 0,
         tenure: int.tryParse(_formData['tenure']?.toString() ?? '') ?? 0,
         purpose: _formData['purpose']?.toString() ?? '',
       );
@@ -102,7 +106,9 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
         request,
         AuthSession.instance.bearerToken,
       );
-      final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decodedBody = jsonDecode(response.body);
+      final responseBody =
+          decodedBody is Map<String, dynamic> ? decodedBody : null;
       final applicationId = responseBody?['applicationId']?.toString();
       final success = responseBody?['success'] == true ||
           (responseBody?['success'] != false &&
@@ -115,7 +121,9 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
       if (success) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Loan application submitted successfully')),
+          SnackBar(
+            content: Text(message ?? 'Loan application submitted successfully'),
+          ),
         );
         context.push(
           Uri(
@@ -126,7 +134,9 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Failed to submit loan application.')),
+          SnackBar(
+            content: Text(message ?? 'Failed to submit loan application.'),
+          ),
         );
       }
     } catch (_) {

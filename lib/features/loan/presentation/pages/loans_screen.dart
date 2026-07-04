@@ -167,7 +167,7 @@ class _LoansScreenState extends State<LoansScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: applications.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, index) {
                     final application = applications[index];
                     return ListTile(

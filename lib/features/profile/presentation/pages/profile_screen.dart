@@ -1,16 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/app/router.dart';
 import 'package:finhub/core/theme/app_colors.dart';
-import 'package:finhub/core/theme/app_theme.dart';
-import 'package:finhub/core/widgets/app_button.dart';
+import 'package:finhub/core/theme/app_text_styles.dart';
+import 'package:finhub/core/widgets/app_radius.dart';
+import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
+import 'package:finhub/core/widgets/primary_button.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/features/loan/application/services/cloudinary_service.dart';
 import 'package:finhub/features/profile/application/services/profile_service.dart';
 
+/// Profile page that surfaces account details, loan shortcuts, and logout.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -21,18 +24,27 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final CloudinaryService _cloudinaryService = CloudinaryService();
   final ProfileService _profileService = ProfileService();
+
   bool _isUploadingProfileImage = false;
 
   String get _displayName {
-    return AuthSession.instance.userName.isNotEmpty
-        ? AuthSession.instance.userName
-        : 'Loan Tracker user';
+    final name = AuthSession.instance.userName.trim();
+    return name.isEmpty ? 'FinHub user' : name;
   }
 
   String get _displayEmail {
-    return AuthSession.instance.email.isNotEmpty
-        ? AuthSession.instance.email
-        : 'Email not available';
+    final email = AuthSession.instance.email.trim();
+    return email.isEmpty ? 'Email not available' : email;
+  }
+
+  String get _displayPhone {
+    final phone = AuthSession.instance.phone.trim();
+    return phone.isEmpty ? 'Add phone number' : phone;
+  }
+
+  String get _displayAddress {
+    final address = AuthSession.instance.address.trim();
+    return address.isEmpty ? 'Add address' : address;
   }
 
   @override
@@ -41,113 +53,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
       animation: AuthSession.instance,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Profile')),
+          backgroundColor: AppColors.background,
           body: SafeArea(
             child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
               children: [
-                _ProfileHeader(
+                Text(
+                  'Profile',
+                  style: AppTextStyles.headlineLarge(context),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                _ProfileHeaderCard(
                   name: _displayName,
                   email: _displayEmail,
                   imageUrl: AuthSession.instance.profileImageUrl,
                   isUploading: _isUploadingProfileImage,
-                  onUploadImage: _uploadProfilePicture,
+                  onCameraTap: _uploadProfilePicture,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                _SectionTitle(
+                const SizedBox(height: AppSpacing.xl),
+                _SectionHeader(
                   title: 'Personal details',
                   actionLabel: 'Edit',
+                  actionIcon: Icons.edit_outlined,
                   onAction: _showEditProfileSheet,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                _InfoPanel(
-                  children: [
-                    _ProfileDetail(
-                      icon: Icons.person_outline,
-                      title: 'Full name',
+                const SizedBox(height: AppSpacing.md),
+                _ProfileDetailsPanel(
+                  rows: [
+                    _DetailRowData(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Full name',
                       value: _displayName,
                     ),
-                    _ProfileDetail(
-                      icon: Icons.mail_outline,
-                      title: 'Email',
+                    _DetailRowData(
+                      icon: Icons.mail_outline_rounded,
+                      label: 'Email',
                       value: _displayEmail,
                     ),
-                    _ProfileDetail(
+                    _DetailRowData(
                       icon: Icons.phone_outlined,
-                      title: 'Phone',
-                      value: AuthSession.instance.phone.isNotEmpty
-                          ? AuthSession.instance.phone
-                          : 'Add phone number',
+                      label: 'Phone',
+                      value: _displayPhone,
                     ),
-                    _ProfileDetail(
+                    _DetailRowData(
                       icon: Icons.home_outlined,
-                      title: 'Address',
-                      value: AuthSession.instance.address.isNotEmpty
-                          ? AuthSession.instance.address
-                          : 'Add address',
-                      isLast: true,
+                      label: 'Address',
+                      value: _displayAddress,
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                const _SectionTitle(title: 'Loan actions'),
-                const SizedBox(height: AppSpacing.sm),
-                _ActionTile(
+                const SizedBox(height: AppSpacing.xl),
+                const _SectionHeader(title: 'Loan actions'),
+                const SizedBox(height: AppSpacing.md),
+                _ActionCard(
                   icon: Icons.account_balance_wallet_outlined,
                   title: 'My loans',
-                  subtitle:
-                      'View applications and upload documents from status',
+                  subtitle: 'View applications and upload documents from status',
                   onTap: () => context.push(AppRoutePaths.loans),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                _ActionTile(
+                const SizedBox(height: AppSpacing.md),
+                _ActionCard(
                   icon: Icons.calculate_outlined,
                   title: 'EMI calculator',
                   subtitle: 'Estimate monthly repayments',
                   onTap: () => context.push(AppRoutePaths.calculator),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                _ActionTile(
+                const SizedBox(height: AppSpacing.md),
+                _ActionCard(
                   icon: Icons.upload_file_outlined,
                   title: 'Upload documents',
                   subtitle:
                       'Open this from a loan status page to attach an application ID',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Open a loan status page, then tap Upload documents.',
-                        ),
-                      ),
-                    );
-                    context.push(AppRoutePaths.loans);
-                  },
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                const _SectionTitle(title: 'Account'),
-                const SizedBox(height: AppSpacing.sm),
-                _StatusPanel(
-                  items: [
-                    _StatusItem(
-                      label: 'Session',
-                      value: AuthSession.instance.isAuthenticated
-                          ? 'Active'
-                          : 'Signed out',
-                      icon: Icons.verified_user_outlined,
-                    ),
-                    const _StatusItem(
-                      label: 'Required KYC',
-                      value: 'PAN and Aadhaar',
-                      icon: Icons.assignment_turned_in_outlined,
-                    ),
-                  ],
+                  onTap: _showUploadDocumentHint,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                AppButton(
-                  label: 'Logout',
-                  onPressed: _logout,
-                  variant: AppButtonVariant.secondary,
-                ),
+                const _SectionHeader(title: 'Account'),
+                const SizedBox(height: AppSpacing.md),
+                const _AccountPanel(),
+                const SizedBox(height: AppSpacing.xl),
+                _LogoutButton(onTap: _logout),
               ],
             ),
           ),
@@ -156,71 +145,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _logout() async {
-    final router = GoRouter.of(context);
-    await AuthSession.instance.logout();
-    if (!mounted) {
-      return;
-    }
-
-    router.go(AppRoutePaths.login);
-  }
-
   Future<void> _uploadProfilePicture() async {
-    final userId = AuthSession.instance.userId;
-    if (userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User ID is missing. Please login again.'),
-        ),
-      );
+    if (_isUploadingProfileImage) {
       return;
     }
 
+    final userId = AuthSession.instance.userId;
+    final token = AuthSession.instance.bearerToken;
+    if (userId.isEmpty || token.isEmpty) {
+      _showSnackBar('Please login again before updating your profile photo.');
+      return;
+    }
+
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
+    final file = result?.files.single;
+    if (file == null) {
+      return;
+    }
+
+    setState(() => _isUploadingProfileImage = true);
     try {
-      final result = await FilePicker.pickFiles(
-        allowMultiple: false,
-        type: FileType.custom,
-        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
-        withData: true,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return;
-      }
-
-      setState(() => _isUploadingProfileImage = true);
-
       final imageUrl = await _cloudinaryService.uploadProfilePicture(
-        file: result.files.single,
+        file: file,
         userId: userId,
       );
-      final responseBody = await _profileService.updateProfile(
+      final response = await _profileService.updateProfile(
         userId: userId,
-        bearerToken: AuthSession.instance.bearerToken,
-        userName: AuthSession.instance.userName,
-        phone: AuthSession.instance.phone,
-        address: AuthSession.instance.address,
+        bearerToken: token,
         profileImageUrl: imageUrl,
       );
-      await AuthSession.instance.updateFromResponse(responseBody);
+
       await AuthSession.instance.updateProfile(profileImageUrl: imageUrl);
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile picture updated.')));
+      await AuthSession.instance.updateFromResponse(response);
+      _showSnackBar('Profile photo updated.');
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      _showSnackBar(error.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _isUploadingProfileImage = false);
@@ -229,255 +192,194 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showEditProfileSheet() async {
-    final nameController = TextEditingController(
-      text: AuthSession.instance.userName,
-    );
-    final emailController = TextEditingController(
-      text: AuthSession.instance.email,
-    );
+    final nameController = TextEditingController(text: _displayName);
     final phoneController = TextEditingController(
       text: AuthSession.instance.phone,
     );
     final addressController = TextEditingController(
       text: AuthSession.instance.address,
     );
+    var isSaving = false;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.lg,
-            right: AppSpacing.lg,
-            top: AppSpacing.lg,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Edit profile',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppTextField(
-                  controller: nameController,
-                  label: 'Full name',
-                  hintText: 'Enter your name',
-                  prefixIcon: Icons.person_outline,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppTextField(
-                  controller: emailController,
-                  label: 'Email',
-                  hintText: 'Enter your email',
-                  prefixIcon: Icons.mail_outline,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppTextField(
-                  controller: phoneController,
-                  label: 'Phone',
-                  hintText: 'Enter your phone number',
-                  prefixIcon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppTextField(
-                  controller: addressController,
-                  label: 'Address',
-                  hintText: 'Enter your address',
-                  prefixIcon: Icons.home_outlined,
-                  textInputAction: TextInputAction.done,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppButton(
-                  label: 'Save',
-                  onPressed: () async {
-                    final userName = nameController.text.trim();
-                    final email = emailController.text.trim();
-                    final phone = phoneController.text.trim();
-                    final address = addressController.text.trim();
-
-                    try {
-                      final responseBody = await _profileService.updateProfile(
-                        userId: AuthSession.instance.userId,
-                        bearerToken: AuthSession.instance.bearerToken,
-                        userName: userName,
-                        phone: phone,
-                        address: address,
-                        profileImageUrl: AuthSession.instance.profileImageUrl,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AppSpacing.lg,
+                right: AppSpacing.lg,
+                top: AppSpacing.lg,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit profile',
+                    style: AppTextStyles.titleLarge(context),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppTextField(
+                    controller: nameController,
+                    labelText: 'Full name',
+                    prefixIcon: Icons.person_outline_rounded,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: phoneController,
+                    labelText: 'Phone',
+                    prefixIcon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: addressController,
+                    labelText: 'Address',
+                    prefixIcon: Icons.home_outlined,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  PrimaryButton(
+                    text: 'Save changes',
+                    loading: isSaving,
+                    onPressed: () async {
+                      setSheetState(() => isSaving = true);
+                      await _saveProfile(
+                        name: nameController.text.trim(),
+                        phone: phoneController.text.trim(),
+                        address: addressController.text.trim(),
                       );
-                      await AuthSession.instance.updateFromResponse(
-                        responseBody,
-                      );
-                      await AuthSession.instance.updateProfile(
-                        userName: userName,
-                        email: email,
-                        phone: phone,
-                        address: address,
-                      );
-                    } catch (error) {
-                      if (!context.mounted) {
-                        return;
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
                       }
-
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(error.toString())));
-                      return;
-                    }
-
-                    if (!context.mounted) {
-                      return;
-                    }
-
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile updated.')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
 
     nameController.dispose();
-    emailController.dispose();
     phoneController.dispose();
     addressController.dispose();
   }
+
+  Future<void> _saveProfile({
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
+    try {
+      final userId = AuthSession.instance.userId;
+      final token = AuthSession.instance.bearerToken;
+      Map<String, dynamic>? response;
+
+      if (userId.isNotEmpty && token.isNotEmpty) {
+        response = await _profileService.updateProfile(
+          userId: userId,
+          bearerToken: token,
+          userName: name,
+          phone: phone,
+          address: address,
+        );
+      }
+
+      await AuthSession.instance.updateProfile(
+        userName: name,
+        phone: phone,
+        address: address,
+      );
+      await AuthSession.instance.updateFromResponse(response);
+      _showSnackBar('Profile updated.');
+    } catch (error) {
+      _showSnackBar(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  void _showUploadDocumentHint() {
+    _showSnackBar('Open a loan status page, then tap Upload documents.');
+  }
+
+  Future<void> _logout() async {
+    await AuthSession.instance.logout();
+    if (mounted) {
+      context.go(AppRoutePaths.login);
+    }
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({
+class _ProfileHeaderCard extends StatelessWidget {
+  const _ProfileHeaderCard({
     required this.name,
     required this.email,
     required this.imageUrl,
     required this.isUploading,
-    required this.onUploadImage,
+    required this.onCameraTap,
   });
 
   final String name;
   final String email;
   final String imageUrl;
   final bool isUploading;
-  final VoidCallback onUploadImage;
+  final VoidCallback onCameraTap;
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imageUrl.isNotEmpty;
-
-    return Container(
+    return _CardSurface(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
       child: Row(
         children: [
-          SizedBox(
-            width: 76,
-            height: 76,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Material(
-                    color: Colors.transparent,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: isUploading ? null : onUploadImage,
-                      child: CircleAvatar(
-                        radius: 34,
-                        backgroundColor: AppColors.accent,
-                        backgroundImage: hasImage
-                            ? NetworkImage(imageUrl)
-                            : null,
-                        child: hasImage
-                            ? null
-                            : Text(
-                                _initials(name),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (isUploading)
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.32),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Tooltip(
-                    message: 'Upload profile picture',
-                    child: Material(
-                      color: AppColors.surface,
-                      shape: const CircleBorder(),
-                      elevation: 2,
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: isUploading ? null : onUploadImage,
-                        child: const Padding(
-                          padding: EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.camera_alt_outlined,
-                            color: AppColors.accent,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          _Avatar(
+            name: name,
+            imageUrl: imageUrl,
+            isUploading: isUploading,
+            onCameraTap: onCameraTap,
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: AppSpacing.xs),
-                Text(email, style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: AppSpacing.sm),
-                const _InlineBadge(
-                  icon: Icons.lock_outline,
-                  label: 'Secure account',
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.headlineMedium(context),
                 ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyLarge(context).copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const _SecureAccountBadge(),
               ],
             ),
           ),
@@ -485,22 +387,123 @@ class _ProfileHeader extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _initials(String name) {
-    final words = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty);
-    final initials = words.take(2).map((word) => word[0].toUpperCase()).join();
-    return initials.isEmpty ? 'LT' : initials;
+class _Avatar extends StatelessWidget {
+  const _Avatar({
+    required this.name,
+    required this.imageUrl,
+    required this.isUploading,
+    required this.onCameraTap,
+  });
+
+  final String name;
+  final String imageUrl;
+  final bool isUploading;
+  final VoidCallback onCameraTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.trim().isEmpty ? 'F' : name.trim()[0].toUpperCase();
+
+    return SizedBox(
+      height: 96,
+      width: 96,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CircleAvatar(
+            radius: 56,
+            backgroundColor: AppColors.primary,
+            backgroundImage: imageUrl.isEmpty ? null : NetworkImage(imageUrl),
+            child: imageUrl.isEmpty
+                ? Text(
+                    initial,
+                    style: AppTextStyles.headlineLarge(context).copyWith(
+                      color: AppColors.surface,
+                    ),
+                  )
+                : null,
+          ),
+          Positioned(
+            right: -2,
+            bottom: 0,
+            child: Material(
+              color: AppColors.surface,
+              shape: const CircleBorder(
+                side: BorderSide(color: AppColors.border),
+              ),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: isUploading ? null : onCameraTap,
+                child: SizedBox.square(
+                  dimension: 42,
+                  child: isUploading
+                      ? const Padding(
+                          padding: EdgeInsets.all(AppSpacing.sm),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(
+                          Icons.photo_camera_outlined,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, this.actionLabel, this.onAction});
+class _SecureAccountBadge extends StatelessWidget {
+  const _SecureAccountBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.lock_outline_rounded,
+            color: AppColors.textSecondary,
+            size: 18,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'Secure account',
+            style: AppTextStyles.labelLarge(context).copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
 
   final String title;
   final String? actionLabel;
+  final IconData? actionIcon;
   final VoidCallback? onAction;
 
   @override
@@ -508,77 +511,88 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+          child: Text(
+            title,
+            style: AppTextStyles.headlineMedium(context),
+          ),
         ),
         if (actionLabel != null && onAction != null)
           TextButton.icon(
             onPressed: onAction,
-            icon: const Icon(Icons.edit_outlined, size: 18),
+            icon: Icon(actionIcon, size: 22),
             label: Text(actionLabel!),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              textStyle: AppTextStyles.titleMedium(context),
+            ),
           ),
       ],
     );
   }
 }
 
-class _InfoPanel extends StatelessWidget {
-  const _InfoPanel({required this.children});
+class _ProfileDetailsPanel extends StatelessWidget {
+  const _ProfileDetailsPanel({required this.rows});
 
-  final List<Widget> children;
+  final List<_DetailRowData> rows;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+    return _CardSurface(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (var index = 0; index < rows.length; index++) ...[
+            _DetailRow(data: rows[index]),
+            if (index != rows.length - 1)
+              const Divider(height: 1, color: AppColors.border),
+          ],
+        ],
       ),
-      child: Column(children: children),
     );
   }
 }
 
-class _ProfileDetail extends StatelessWidget {
-  const _ProfileDetail({
+class _DetailRowData {
+  const _DetailRowData({
     required this.icon,
-    required this.title,
+    required this.label,
     required this.value,
-    this.isLast = false,
   });
 
   final IconData icon;
-  final String title;
+  final String label;
   final String value;
-  final bool isLast;
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.data});
+
+  final _DetailRowData data;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(bottom: BorderSide(color: AppColors.border)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.accent),
-          const SizedBox(width: AppSpacing.md),
+          Icon(data.icon, color: AppColors.primary, size: 30),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  data.label,
+                  style: AppTextStyles.bodyLarge(context).copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  value,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  data.value,
+                  style: AppTextStyles.titleLarge(context),
                 ),
               ],
             ),
@@ -589,8 +603,8 @@ class _ProfileDetail extends StatelessWidget {
   }
 }
 
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -604,144 +618,170 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: AppColors.accent),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
+    return _CardSurface(
+      padding: EdgeInsets.zero,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 30),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTextStyles.titleLarge(context)),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.bodyLarge(context).copyWith(
+                      color: AppColors.textSecondary,
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 32,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({required this.items});
-
-  final List<_StatusItem> items;
+class _AccountPanel extends StatelessWidget {
+  const _AccountPanel();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
+    return _CardSurface(
+      padding: EdgeInsets.zero,
       child: Column(
-        children: [
-          for (var index = 0; index < items.length; index++) ...[
-            items[index],
-            if (index != items.length - 1) const Divider(height: AppSpacing.lg),
-          ],
+        children: const [
+          _AccountRow(
+            icon: Icons.verified_user_outlined,
+            title: 'Session',
+            value: 'Active',
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Divider(height: 1, color: AppColors.border),
+          ),
+          _AccountRow(
+            icon: Icons.fact_check_outlined,
+            title: 'Required KYC',
+            value: 'PAN and Aadhaar',
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatusItem extends StatelessWidget {
-  const _StatusItem({
-    required this.label,
-    required this.value,
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({
     required this.icon,
+    required this.title,
+    required this.value,
   });
 
-  final String label;
-  final String value;
   final IconData icon;
+  final String title;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.accent),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 30),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Text(title, style: AppTextStyles.titleLarge(context)),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: AppTextStyles.bodyLarge(context).copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardSurface(
+      padding: EdgeInsets.zero,
+      onTap: onTap,
+      child: SizedBox(
+        height: 64,
+        child: Center(
           child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
+            'Logout',
+            style: AppTextStyles.titleLarge(context).copyWith(
+              color: AppColors.primary,
             ),
           ),
         ),
-        Text(value, style: Theme.of(context).textTheme.bodyMedium),
-      ],
+      ),
     );
   }
 }
 
-class _InlineBadge extends StatelessWidget {
-  const _InlineBadge({required this.icon, required this.label});
+class _CardSurface extends StatelessWidget {
+  const _CardSurface({
+    required this.child,
+    required this.padding,
+    this.onTap,
+  });
 
-  final IconData icon;
-  final String label;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final content = Container(
+      width: double.infinity,
+      padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
+      child: child,
+    );
+
+    if (onTap == null) {
+      return content;
+    }
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        onTap: onTap,
+        child: content,
       ),
     );
   }
 }
-
-

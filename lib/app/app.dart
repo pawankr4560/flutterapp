@@ -18,4 +18,3 @@ class FinHubApp extends StatelessWidget {
   }
 }
 
-

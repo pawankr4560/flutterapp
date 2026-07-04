@@ -1,7 +1,9 @@
 import 'package:go_router/go_router.dart';
 
+import 'package:finhub/features/agriculture/presentation/pages/agriculture_directory_page.dart';
 import 'package:finhub/features/auth/presentation/pages/login_page.dart';
 import 'package:finhub/features/auth/presentation/pages/signup_page.dart';
+import 'package:finhub/features/car_booking/presentation/pages/car_booking_directory_page.dart';
 import 'package:finhub/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:finhub/features/dairy/presentation/pages/milk_directory_page.dart';
 import 'package:finhub/features/inventory/presentation/pages/inventory_directory_page.dart';
@@ -13,6 +15,7 @@ import 'package:finhub/features/loan/presentation/pages/loan_directory_page.dart
 import 'package:finhub/features/loan/presentation/pages/uploaded_documents_screen.dart';
 import 'package:finhub/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:finhub/features/payments/presentation/pages/payments_screen.dart';
+import 'package:finhub/features/plot/presentation/pages/plot_directory_page.dart';
 import 'package:finhub/features/profile/presentation/pages/profile_screen.dart';
 import 'package:finhub/features/splash/presentation/pages/splash_page.dart';
 
@@ -27,7 +30,10 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String loans = '/loans';
   static const String inventory = '/inventory';
+  static const String carBooking = '/car-booking';
   static const String dairy = '/dairy';
+  static const String plot = '/plot';
+  static const String agriculturePestiside = '/agriculture-pestiside';
   static const String payments = '/payments';
   static const String profile = '/profile';
   static const String calculator = '/calculator';
@@ -94,9 +100,24 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const InventoryDirectoryPage(),
     ),
     GoRoute(
+      path: AppRoutes.carBooking,
+      name: 'carBooking',
+      builder: (context, state) => const CarBookingDirectoryPage(),
+    ),
+    GoRoute(
       path: AppRoutes.dairy,
       name: 'dairy',
       builder: (context, state) => const MilkDirectoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.plot,
+      name: 'plot',
+      builder: (context, state) => const PlotDirectoryPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.agriculturePestiside,
+      name: 'agriculturePestiside',
+      builder: (context, state) => const AgricultureDirectoryPage(),
     ),
     GoRoute(
       path: AppRoutes.payments,

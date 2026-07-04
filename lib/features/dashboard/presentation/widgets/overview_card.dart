@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
