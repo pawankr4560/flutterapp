@@ -75,7 +75,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         throw Exception('Application ID is missing.');
       }
 
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
         allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],

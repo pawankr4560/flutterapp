@@ -21,12 +21,12 @@ class QuickActionGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quick Modules', style: AppTextStyles.titleLarge(context)),
+        Text('Our Services', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSpacing.md),
         LayoutBuilder(
           builder: (context, constraints) {
             final isTablet = constraints.maxWidth >= AppSpacing.xxl * 12;
-            final columns = isTablet ? 4 : 2;
+            final columns = isTablet ? 6 : 3;
             final spacing = AppSpacing.md;
             final itemWidth =
                 (constraints.maxWidth - spacing * (columns - 1)) / columns;

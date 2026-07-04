@@ -24,6 +24,7 @@ class AppTextField extends StatelessWidget {
     this.hintText,
     this.textInputAction,
     this.errorText,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
     this.onChanged,
   });
 
@@ -44,6 +45,7 @@ class AppTextField extends StatelessWidget {
   final String? hintText;
   final TextInputAction? textInputAction;
   final String? errorText;
+  final AutovalidateMode? autovalidateMode;
   final ValueChanged<String>? onChanged;
 
   @override
@@ -54,6 +56,7 @@ class AppTextField extends StatelessWidget {
       textInputAction: textInputAction,
       obscureText: obscureText && maxLines == 1,
       validator: validator,
+      autovalidateMode: autovalidateMode,
       readOnly: readOnly,
       enabled: enabled,
       maxLines: obscureText ? 1 : maxLines,

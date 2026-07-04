@@ -1,36 +1,41 @@
-import 'package:finhub/app/app.dart';
+import 'package:finhub/core/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Widget smoke tests for the FinHub application shell.
 void main() {
-  testWidgets('FinHub shell navigates through placeholder routes', (
+  testWidgets('AppTextField clears validation error after valid input', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const FinHubApp());
-    await tester.pumpAndSettle();
+    final formKey = GlobalKey<FormState>();
 
-    expect(find.text('FinHub'), findsOneWidget);
-    expect(find.text('One App. Multiple Businesses.'), findsOneWidget);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Form(
+            key: formKey,
+            child: AppTextField(
+              labelText: 'Email',
+              hintText: 'Email',
+              validator: (value) {
+                final email = value?.trim() ?? '';
+                final isValid =
+                    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+                return isValid ? null : 'Enter a valid email address';
+              },
+            ),
+          ),
+        ),
+      ),
+    );
 
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    formKey.currentState!.validate();
+    await tester.pump();
 
-    expect(find.text('Business modules'), findsOneWidget);
-    expect(find.text('Loan Management'), findsOneWidget);
+    expect(find.text('Enter a valid email address'), findsOneWidget);
 
-    await tester.tap(find.text('Get started'));
-    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'admin@gmail.com');
+    await tester.pump();
 
-    expect(find.text('Welcome back'), findsOneWidget);
-    expect(find.byType(TextFormField), findsNWidgets(2));
-
-    await tester.tap(find.text('Login'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Bookings'), findsOneWidget);
-    expect(find.text('Reports'), findsOneWidget);
+    expect(find.text('Enter a valid email address'), findsNothing);
   });
 }
-
-

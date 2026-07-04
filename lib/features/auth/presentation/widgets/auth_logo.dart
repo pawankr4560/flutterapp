@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 
+/// Reusable Seva Sathi auth logo block.
 class AuthLogo extends StatelessWidget {
-  const AuthLogo({super.key, required this.icon});
-
-  final IconData icon;
+  const AuthLogo({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +24,17 @@ class AuthLogo extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 38,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: 14),
         const Text(
-          'Loan Tracker',
+          'Seva Sathi',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,

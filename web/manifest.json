@@ -1,11 +1,11 @@
 {
-    "name": "loan_tracker_application",
-    "short_name": "loan_tracker_application",
+    "name": "Seva Sathi",
+    "short_name": "Seva Sathi",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "One app for managing multiple businesses.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

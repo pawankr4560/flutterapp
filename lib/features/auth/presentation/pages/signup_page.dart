@@ -14,7 +14,7 @@ import 'package:finhub/features/auth/application/services/auth_service.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/features/auth/data/models/auth_requests.dart';
 
-/// Signup screen backed by the FinHub authentication API.
+/// Signup screen backed by the Seva Sathi authentication API.
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -57,7 +57,10 @@ class _SignupPageState extends State<SignupPage> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              Text('Join FinHub', style: AppTextStyles.headlineMedium(context)),
+              Text(
+                'Join Seva Sathi',
+                style: AppTextStyles.headlineMedium(context),
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text('Create your account to manage every business.',
                   style: AppTextStyles.bodyMedium(context)),

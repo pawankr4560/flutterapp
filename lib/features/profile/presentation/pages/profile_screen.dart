@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String get _displayName {
     final name = AuthSession.instance.userName.trim();
-    return name.isEmpty ? 'FinHub user' : name;
+    return name.isEmpty ? 'Seva Sathi user' : name;
   }
 
   String get _displayEmail {
@@ -157,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
       withData: true,
@@ -785,3 +785,4 @@ class _CardSurface extends StatelessWidget {
     );
   }
 }
+

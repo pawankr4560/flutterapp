@@ -172,7 +172,7 @@ class LoanDetailPage extends ConsumerWidget {
   void _shareReceipt(BuildContext context, LoanCustomer customer,
       LoanTransaction transaction) {
     final receipt = '''
-FinHub Payment Receipt
+Seva Sathi Payment Receipt
 Customer: ${customer.name}
 Amount Paid: ${money(transaction.amountPaid)}
 Payment Mode: ${transaction.paymentMode}

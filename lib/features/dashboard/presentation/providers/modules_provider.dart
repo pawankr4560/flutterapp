@@ -7,8 +7,8 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
   return const [
     BusinessModule(
       id: 'loan',
-      title: 'Loan Management',
-      subtitle: '128 Active',
+      title: 'Loan',
+      subtitle: 'Quick & Easy Loans',
       iconName: 'payments',
       hexColor: '#4F46E5',
       isEnabled: true,
@@ -16,8 +16,8 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
     ),
     BusinessModule(
       id: 'inventory',
-      title: 'Inventory Status',
-      subtitle: '4 Low Stock',
+      title: 'Store Inventory',
+      subtitle: 'Manage Your Inventory',
       iconName: 'inventory',
       hexColor: '#2563EB',
       isEnabled: true,
@@ -25,8 +25,8 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
     ),
     BusinessModule(
       id: 'car_booking',
-      title: 'Car Rentals',
-      subtitle: '3 Booked Today',
+      title: 'Car Booking',
+      subtitle: 'Book Your Dream Car',
       iconName: 'directions_car',
       hexColor: '#22C55E',
       isEnabled: true,
@@ -34,8 +34,8 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
     ),
     BusinessModule(
       id: 'dairy',
-      title: 'Dairy Collection',
-      subtitle: 'Ready',
+      title: 'Dairy Products',
+      subtitle: 'Fresh & Pure Dairy',
       iconName: 'water_drop',
       hexColor: '#06B6D4',
       isEnabled: true,
@@ -43,8 +43,8 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
     ),
     BusinessModule(
       id: 'plot',
-      title: 'Plot & Real Estate',
-      subtitle: '12 Available',
+      title: 'Plot Purchase',
+      subtitle: 'Find & Buy Best Plots',
       iconName: 'home',
       hexColor: '#F59E0B',
       isEnabled: true,
@@ -53,7 +53,7 @@ final businessModulesProvider = Provider<List<BusinessModule>>((ref) {
     BusinessModule(
       id: 'agriculture_pestiside',
       title: 'Agriculture',
-      subtitle: 'Fields & Stock',
+      subtitle: 'Field & Stock Records',
       iconName: 'agriculture',
       hexColor: '#16A34A',
       isEnabled: true,
