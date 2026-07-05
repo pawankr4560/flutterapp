@@ -157,11 +157,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-      withData: true,
-    );
+   final result = await FilePicker.platform.pickFiles(
+    type: FileType.image,
+    allowMultiple: false,
+    withData: true,
+  );
     final file = result?.files.single;
     if (file == null) {
       return;
