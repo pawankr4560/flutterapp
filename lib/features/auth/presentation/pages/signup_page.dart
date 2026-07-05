@@ -14,7 +14,7 @@ import 'package:finhub/features/auth/application/services/auth_service.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/features/auth/data/models/auth_requests.dart';
 
-/// Signup screen backed by the Seva Sathi authentication API.
+/// Signup screen backed by the SmartSathi authentication API.
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -58,22 +58,26 @@ class _SignupPageState extends State<SignupPage> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               Text(
-                'Join Seva Sathi',
+                'Join SmartSathi',
                 style: AppTextStyles.headlineMedium(context),
               ),
               const SizedBox(height: AppSpacing.xs),
-              Text('Create your account to manage every business.',
-                  style: AppTextStyles.bodyMedium(context)),
+              Text(
+                'Create account to manage every services.',
+                style: AppTextStyles.bodyMedium(context),
+              ),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
-                  controller: _firstName,
-                  label: 'First Name',
-                  validator: _required),
+                controller: _firstName,
+                label: 'First Name',
+                validator: _required,
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
-                  controller: _lastName,
-                  label: 'Last Name',
-                  validator: _required),
+                controller: _lastName,
+                label: 'Last Name',
+                validator: _required,
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 controller: _email,
@@ -97,10 +101,11 @@ class _SignupPageState extends State<SignupPage> {
               ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
-                  controller: _address,
-                  label: 'Address',
-                  maxLines: 2,
-                  validator: _required),
+                controller: _address,
+                label: 'Address',
+                maxLines: 2,
+                validator: _required,
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 controller: _password,
@@ -135,16 +140,18 @@ class _SignupPageState extends State<SignupPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final response = await _authService.signup(SignupRequest(
-        email: _email.text.trim(),
-        password: _password.text,
-        confirmPassword: _confirmPassword.text,
-        firstName: _firstName.text.trim(),
-        lastName: _lastName.text.trim(),
-        phone: _phone.text.trim(),
-        gender: _gender,
-        address: _address.text.trim(),
-      ));
+      final response = await _authService.signup(
+        SignupRequest(
+          email: _email.text.trim(),
+          password: _password.text,
+          confirmPassword: _confirmPassword.text,
+          firstName: _firstName.text.trim(),
+          lastName: _lastName.text.trim(),
+          phone: _phone.text.trim(),
+          gender: _gender,
+          address: _address.text.trim(),
+        ),
+      );
       final body = _decodeBody(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         await AuthSession.instance.updateFromResponse(body);
@@ -202,7 +209,9 @@ class _SignupPageState extends State<SignupPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

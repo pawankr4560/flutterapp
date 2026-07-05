@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String get _displayName {
     final name = AuthSession.instance.userName.trim();
-    return name.isEmpty ? 'Seva Sathi user' : name;
+    return name.isEmpty ? 'SmartSathi user' : name;
   }
 
   String get _displayEmail {
@@ -63,10 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 AppSpacing.xl,
               ),
               children: [
-                Text(
-                  'Profile',
-                  style: AppTextStyles.headlineLarge(context),
-                ),
+                Text('Profile', style: AppTextStyles.headlineLarge(context)),
                 const SizedBox(height: AppSpacing.xl),
                 _ProfileHeaderCard(
                   name: _displayName,
@@ -113,7 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _ActionCard(
                   icon: Icons.account_balance_wallet_outlined,
                   title: 'My loans',
-                  subtitle: 'View applications and upload documents from status',
+                  subtitle:
+                      'View applications and upload documents from status',
                   onTap: () => context.push(AppRoutePaths.loans),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -157,11 +155,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-   final result = await FilePicker.platform.pickFiles(
-    type: FileType.image,
-    allowMultiple: false,
-    withData: true,
-  );
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
     final file = result?.files.single;
     if (file == null) {
       return;
@@ -206,9 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (sheetContext) {
         return StatefulBuilder(
@@ -218,7 +214,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 left: AppSpacing.lg,
                 right: AppSpacing.lg,
                 top: AppSpacing.lg,
-                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -325,9 +322,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -374,9 +371,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyLarge(context).copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.bodyLarge(
+                    context,
+                  ).copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 const _SecureAccountBadge(),
@@ -419,9 +416,9 @@ class _Avatar extends StatelessWidget {
             child: imageUrl.isEmpty
                 ? Text(
                     initial,
-                    style: AppTextStyles.headlineLarge(context).copyWith(
-                      color: AppColors.surface,
-                    ),
+                    style: AppTextStyles.headlineLarge(
+                      context,
+                    ).copyWith(color: AppColors.surface),
                   )
                 : null,
           ),
@@ -483,9 +480,9 @@ class _SecureAccountBadge extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(
             'Secure account',
-            style: AppTextStyles.labelLarge(context).copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.labelLarge(
+              context,
+            ).copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -511,10 +508,7 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: AppTextStyles.headlineMedium(context),
-          ),
+          child: Text(title, style: AppTextStyles.headlineMedium(context)),
         ),
         if (actionLabel != null && onAction != null)
           TextButton.icon(
@@ -585,15 +579,12 @@ class _DetailRow extends StatelessWidget {
               children: [
                 Text(
                   data.label,
-                  style: AppTextStyles.bodyLarge(context).copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.bodyLarge(
+                    context,
+                  ).copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(
-                  data.value,
-                  style: AppTextStyles.titleLarge(context),
-                ),
+                Text(data.value, style: AppTextStyles.titleLarge(context)),
               ],
             ),
           ),
@@ -635,9 +626,9 @@ class _ActionCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     subtitle,
-                    style: AppTextStyles.bodyLarge(context).copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: AppTextStyles.bodyLarge(
+                      context,
+                    ).copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -710,9 +701,9 @@ class _AccountRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: AppTextStyles.bodyLarge(context).copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.bodyLarge(
+                context,
+              ).copyWith(color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -736,9 +727,9 @@ class _LogoutButton extends StatelessWidget {
         child: Center(
           child: Text(
             'Logout',
-            style: AppTextStyles.titleLarge(context).copyWith(
-              color: AppColors.primary,
-            ),
+            style: AppTextStyles.titleLarge(
+              context,
+            ).copyWith(color: AppColors.primary),
           ),
         ),
       ),
@@ -747,11 +738,7 @@ class _LogoutButton extends StatelessWidget {
 }
 
 class _CardSurface extends StatelessWidget {
-  const _CardSurface({
-    required this.child,
-    required this.padding,
-    this.onTap,
-  });
+  const _CardSurface({required this.child, required this.padding, this.onTap});
 
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -785,4 +772,3 @@ class _CardSurface extends StatelessWidget {
     );
   }
 }
-

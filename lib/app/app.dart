@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'router.dart';
 import 'theme.dart';
 
-/// Root Seva Sathi application widget configured with router-based navigation.
+/// Root SmartSathi application widget configured with router-based navigation.
 class FinHubApp extends StatelessWidget {
   const FinHubApp({super.key});
 
@@ -11,7 +11,7 @@ class FinHubApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Seva Sathi',
+      title: 'SmartSathi',
       theme: FinHubTheme.light,
       routerConfig: appRouter,
     );

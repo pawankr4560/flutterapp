@@ -7,7 +7,7 @@ import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_card.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
 
-/// Placeholder onboarding screen for introducing Seva Sathi modules.
+/// Placeholder onboarding screen for introducing SmartSathi modules.
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
 
@@ -30,7 +30,7 @@ class OnboardingPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text('Seva Sathi', style: AppTextStyles.headlineLarge(context)),
+            Text('SmartSathi', style: AppTextStyles.headlineLarge(context)),
             const SizedBox(height: 8),
             Text(
               'One App. Multiple Businesses.',
@@ -65,5 +65,3 @@ class OnboardingPage extends StatelessWidget {
     );
   }
 }
-
-

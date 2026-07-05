@@ -50,15 +50,15 @@ class _LoginPageState extends State<LoginPage> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isWide ? 980 : 460,
-                  ),
+                  constraints: BoxConstraints(maxWidth: isWide ? 980 : 460),
                   child: isWide
                       ? Row(
                           children: [
                             const Expanded(child: _BrandPanel()),
                             const SizedBox(width: AppSpacing.xl),
-                            Expanded(child: _LoginCard(content: _formContent())),
+                            Expanded(
+                              child: _LoginCard(content: _formContent()),
+                            ),
                           ],
                         )
                       : _LoginCard(content: _formContent()),
@@ -86,11 +86,11 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Sign in to manage your businesses.',
+            'Sign in to manage your Services.',
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodyLarge(context).copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.bodyLarge(
+              context,
+            ).copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.xl),
           AppTextField(
@@ -140,12 +140,13 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'New to Seva Sathi?',
+                'New to SmartSathi?',
                 style: AppTextStyles.bodyMedium(context),
               ),
               TextButton(
-                onPressed:
-                    _isLoading ? null : () => context.push(AppRoutes.signup),
+                onPressed: _isLoading
+                    ? null
+                    : () => context.push(AppRoutes.signup),
                 child: const Text('Create account'),
               ),
             ],
@@ -215,9 +216,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -265,24 +266,24 @@ class _BrandPanel extends StatelessWidget {
           const _LogoMark(isLight: true),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            'Seva Sathi',
-            style: AppTextStyles.displayMedium(context).copyWith(
-              color: AppColors.surface,
-            ),
+            'SmartSathi',
+            style: AppTextStyles.displayMedium(
+              context,
+            ).copyWith(color: AppColors.surface),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'One App. Multiple Businesses.',
-            style: AppTextStyles.titleMedium(context).copyWith(
-              color: AppColors.surface,
-            ),
+            style: AppTextStyles.titleMedium(
+              context,
+            ).copyWith(color: AppColors.surface),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'Manage loans, inventory, dairy, vehicles, plots, reports, and alerts from one secure workspace.',
-            style: AppTextStyles.bodyLarge(context).copyWith(
-              color: AppColors.surface,
-            ),
+            style: AppTextStyles.bodyLarge(
+              context,
+            ).copyWith(color: AppColors.surface),
           ),
         ],
       ),
@@ -309,10 +310,7 @@ class _LogoMark extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.large),
-          child: Image.asset(
-            'assets/images/app_logo.png',
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset('assets/images/app_logo.png', fit: BoxFit.cover),
         ),
       ),
     );

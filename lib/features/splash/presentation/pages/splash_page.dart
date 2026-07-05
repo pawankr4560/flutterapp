@@ -6,7 +6,7 @@ import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/loading_indicator.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
 
-/// Initial splash screen for the Seva Sathi application.
+/// Initial splash screen for the SmartSathi application.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -61,7 +61,7 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text('Seva Sathi', style: AppTextStyles.headlineLarge(context)),
+                Text('SmartSathi', style: AppTextStyles.headlineLarge(context)),
                 const SizedBox(height: 8),
                 Text(
                   'One App. Multiple Businesses.',
@@ -81,5 +81,3 @@ class _SplashPageState extends State<SplashPage> {
     );
   }
 }
-
-

@@ -10,19 +10,16 @@ import 'package:finhub/features/dashboard/domain/entities/business_module.dart';
 
 /// Compact dashboard service tile for a business module.
 class ModuleCard extends StatelessWidget {
-  const ModuleCard({
-    super.key,
-    required this.module,
-    this.onTap,
-  });
+  const ModuleCard({super.key, required this.module, this.onTap});
 
   final BusinessModule module;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final accentColor =
-        module.isEnabled ? _colorFromHex(module.hexColor) : AppColors.border;
+    final accentColor = module.isEnabled
+        ? _colorFromHex(module.hexColor)
+        : AppColors.border;
     final VoidCallback? effectiveOnTap = module.isEnabled
         ? () {
             onTap?.call();
@@ -114,6 +111,7 @@ class ModuleCard extends StatelessWidget {
     return switch (value) {
       'payments' => Icons.payments_rounded,
       'inventory' => Icons.inventory_2_rounded,
+      'construction' => Icons.construction_rounded,
       'directions_car' => Icons.directions_car_rounded,
       'water_drop' => Icons.water_drop_rounded,
       'home' => Icons.home_rounded,
