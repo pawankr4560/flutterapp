@@ -237,7 +237,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     return Theme(
       data: _constructionTheme(context),
       child: Scaffold(
-        backgroundColor: _constructionBackground,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -1374,7 +1374,6 @@ class _QuoteRequest {
 const Color _amber = Color(0xFFF59E0B);
 const Color _amberDark = Color(0xFFD97706);
 const Color _blueGray = Color(0xFF475569);
-const Color _constructionBackground = Color(0xFFFAF8F3);
 const Color _constructionBorder = Color(0xFFF1E6D4);
 const Color _constructionTint = Color(0xFFFFF3D8);
 
@@ -1393,9 +1392,9 @@ ThemeData _constructionTheme(BuildContext context) {
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: _constructionBackground,
+    scaffoldBackgroundColor: AppColors.background,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor: _constructionBackground,
+      backgroundColor: AppColors.background,
       foregroundColor: AppColors.textPrimary,
       surfaceTintColor: Colors.transparent,
       elevation: 0,

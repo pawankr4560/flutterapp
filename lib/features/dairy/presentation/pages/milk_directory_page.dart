@@ -94,7 +94,7 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
     return Theme(
       data: _dairyTheme(context),
       child: Scaffold(
-        backgroundColor: _dairyBackground,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -1900,7 +1900,6 @@ class _PaymentEntry {
 
 const Color _teal = Color(0xFF14B8D0);
 const Color _tealDark = Color(0xFF0891B2);
-const Color _dairyBackground = Color(0xFFF7FCFB);
 const Color _dairyTint = Color(0xFFE7F8FB);
 
 ThemeData _dairyTheme(BuildContext context) {
@@ -1918,9 +1917,9 @@ ThemeData _dairyTheme(BuildContext context) {
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: _dairyBackground,
+    scaffoldBackgroundColor: AppColors.background,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor: _dairyBackground,
+      backgroundColor: AppColors.background,
       foregroundColor: AppColors.textPrimary,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
