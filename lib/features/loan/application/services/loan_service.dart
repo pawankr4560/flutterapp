@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
 import 'package:finhub/features/loan/data/models/loan_application.dart';
 import 'package:finhub/features/loan/data/models/loan_status.dart';
 import 'package:finhub/features/loan/data/models/uploaded_document.dart';
@@ -10,24 +12,18 @@ import 'package:finhub/features/loan/data/models/document_requests.dart';
 import 'package:finhub/features/loan/data/models/loan_requests.dart';
 
 class LoanService {
-  LoanService({http.Client? client}) : _client = client ?? http.Client();
+  LoanService({http.Client? client}) : _apiClient = ApiClient(client: client);
 
-  final http.Client _client;
-  final Uri _applicationUri = Uri.parse('${AppConfig.baseUrl}/Loan/loan-applications');
+  final ApiClient _apiClient;
+  final Uri _applicationUri = Uri.parse(
+    '${AppConfig.baseUrl}/Loan/loan-applications',
+  );
 
   Future<http.Response> submitApplication(
     LoanApplicationRequest request,
     String bearerToken,
   ) async {
-    try {
-      return await _post(
-        _applicationUri,
-        request.toJson(),
-        bearerToken,
-      );
-    } catch (_) {
-      throw Exception('Unable to submit application. Please check your connection.');
-    }
+    return _post(_applicationUri, request.toJson(), bearerToken);
   }
 
   Future<List<LoanApplication>> fetchApplications(
@@ -38,22 +34,7 @@ class LoanService {
       queryParameters: {'userId': userId},
     );
 
-    http.Response response;
-    try {
-      response = await _client.get(
-        uri,
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $bearerToken',
-        },
-      );
-    } catch (_) {
-      throw Exception('Unable to load applications. Please check your network connection.');
-    }
-
-    if (response.statusCode != 200) {
-      throw Exception('Unable to load applications. Server returned ${response.statusCode}.');
-    }
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
 
     late final List<dynamic> body;
     try {
@@ -68,7 +49,7 @@ class LoanService {
         _ => throw const FormatException(),
       };
     } catch (_) {
-      throw Exception('Unable to parse applications response.');
+      throw const ApiException('Unable to parse applications response.');
     }
 
     return body
@@ -87,28 +68,13 @@ class LoanService {
       '${AppConfig.baseUrl}/Loan/users/$userId/loan-applications/$applicationId/status',
     );
 
-    http.Response response;
-    try {
-      response = await _client.get(
-        uri,
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $bearerToken',
-        },
-      );
-    } catch (_) {
-      throw Exception('Unable to load application status. Please check your network connection.');
-    }
-
-    if (response.statusCode != 200) {
-      throw Exception('Unable to load application status. Server returned ${response.statusCode}.');
-    }
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
 
     late final Map<String, dynamic> body;
     try {
       body = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {
-      throw Exception('Unable to parse application status response.');
+      throw const ApiException('Unable to parse application status response.');
     }
 
     return LoanStatus.fromJson(body);
@@ -120,15 +86,7 @@ class LoanService {
   ) async {
     final uri = Uri.parse('${AppConfig.baseUrl}/Loan/documents');
 
-    try {
-      return await _post(
-        uri,
-        request.toJson(),
-        bearerToken,
-      );
-    } catch (_) {
-      throw Exception('Unable to upload documents. Please check your connection.');
-    }
+    return _post(uri, request.toJson(), bearerToken);
   }
 
   Future<List<UploadedDocument>> fetchDocuments(
@@ -137,28 +95,21 @@ class LoanService {
   ) async {
     final uri = Uri.parse('${AppConfig.baseUrl}/Loan/$applicationId/documents');
 
-    http.Response response;
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
+
+    late final List<dynamic> documents;
     try {
-      response = await _client.get(
-        uri,
-        headers: _headers(bearerToken),
-      );
+      final decoded = jsonDecode(response.body);
+      documents = switch (decoded) {
+        {'documents': final List<dynamic> items} => items,
+        {'data': {'documents': final List<dynamic> items}} => items,
+        {'data': final List<dynamic> items} => items,
+        List<dynamic> items => items,
+        _ => throw const FormatException(),
+      };
     } catch (_) {
-      throw Exception('Unable to load documents. Please check your connection.');
+      throw const ApiException('Unable to parse documents response.');
     }
-
-    if (response.statusCode != 200) {
-      throw Exception('Unable to load documents. Server returned ${response.statusCode}.');
-    }
-
-    final decoded = jsonDecode(response.body);
-    final documents = switch (decoded) {
-      {'documents': final List<dynamic> items} => items,
-      {'data': {'documents': final List<dynamic> items}} => items,
-      {'data': final List<dynamic> items} => items,
-      List<dynamic> items => items,
-      _ => throw Exception('Unable to parse documents response.'),
-    };
 
     return documents
         .whereType<Map<String, dynamic>>()
@@ -172,10 +123,11 @@ class LoanService {
     Map<String, dynamic> body,
     String bearerToken,
   ) {
-    return _client.post(
+    return _apiClient.send(
+      'POST',
       uri,
       headers: _headers(bearerToken, includeJsonContentType: true),
-      body: jsonEncode(body),
+      body: body,
     );
   }
 

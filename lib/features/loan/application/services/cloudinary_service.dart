@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
@@ -9,6 +10,7 @@ class CloudinaryService {
   CloudinaryService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
+  static const Duration _uploadTimeout = Duration(seconds: 60);
 
   bool get isConfigured =>
       AppConfig.cloudinaryCloudName.isNotEmpty &&
@@ -51,7 +53,15 @@ class CloudinaryService {
       throw Exception('Selected file could not be read.');
     }
 
-    final streamedResponse = await _client.send(request);
+    late final http.StreamedResponse streamedResponse;
+    try {
+      streamedResponse = await _client.send(request).timeout(_uploadTimeout);
+    } on TimeoutException {
+      throw Exception('Cloudinary upload timed out. Please try again.');
+    } on http.ClientException {
+      throw Exception('Cloudinary upload failed. Please check your connection.');
+    }
+
     final response = await http.Response.fromStream(streamedResponse);
     final responseBody = _tryDecodeMap(response.body);
 

@@ -3,12 +3,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
 import 'package:finhub/features/payments/data/models/payment_record.dart';
 
 class PaymentService {
-  PaymentService({http.Client? client}) : _client = client ?? http.Client();
+  PaymentService({http.Client? client})
+      : _apiClient = ApiClient(client: client);
 
-  final http.Client _client;
+  final ApiClient _apiClient;
   final Uri _paymentsUri = Uri.parse('${AppConfig.baseUrl}/Payment/payments');
   final Uri _razorpayInitiateUri = Uri.parse(
     '${AppConfig.baseUrl}/Razorpay/emi/order',
@@ -20,27 +23,12 @@ class PaymentService {
   }) async {
     final uri = _paymentsUri.replace(queryParameters: {'userId': userId});
 
-    http.Response response;
-    try {
-      response = await _client.get(
-        uri,
-        headers: {
-          'accept': '*/*',
-          if (bearerToken.isNotEmpty) 'Authorization': 'Bearer $bearerToken',
-        },
-      );
-    } catch (_) {
-      throw Exception('Unable to load payments. Please check your connection.');
-    }
-
-    if (response.statusCode != 200) {
-      throw Exception('Unable to load payments. Server returned ${response.statusCode}.');
-    }
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
 
     try {
       return PaymentOverview.fromJson(jsonDecode(response.body));
     } catch (_) {
-      throw Exception('Unable to parse payments response.');
+      throw const ApiException('Unable to parse payments response.');
     }
   }
 
@@ -52,35 +40,24 @@ class PaymentService {
     final loanId = payment.loanId;
     final scheduleId = payment.scheduleId;
     if (loanId == null || scheduleId == null) {
-      throw Exception('Loan ID or schedule ID is missing for this EMI.');
-    }
-
-    http.Response response;
-    try {
-      response = await _client.post(
-        _razorpayInitiateUri,
-        headers: {
-          'accept': '*/*',
-          'Content-Type': 'application/json',
-          if (bearerToken.isNotEmpty) 'Authorization': 'Bearer $bearerToken',
-        },
-        body: jsonEncode({
-          'loanId': loanId,
-          'scheduleId': scheduleId,
-        }),
+      throw const ApiException(
+        'Loan ID or schedule ID is missing for this EMI.',
       );
-    } catch (_) {
-      throw Exception('Unable to start Razorpay payment. Please check your connection.');
     }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Unable to start Razorpay payment. Server returned ${response.statusCode}.');
-    }
+    final response = await _apiClient.post(
+      _razorpayInitiateUri,
+      bearerToken: bearerToken,
+      body: {
+        'loanId': loanId,
+        'scheduleId': scheduleId,
+      },
+    );
 
     try {
       return RazorpayCheckoutSession.fromJson(jsonDecode(response.body));
     } catch (_) {
-      throw Exception('Unable to parse Razorpay payment response.');
+      throw const ApiException('Unable to parse Razorpay payment response.');
     }
   }
 }

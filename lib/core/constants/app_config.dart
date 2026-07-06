@@ -25,7 +25,6 @@ class AppConfig {
 
   static const String _prodBaseUrl = String.fromEnvironment(
     'PROD_API_BASE_URL',
-    defaultValue: _defaultBaseUrl,
   );
 
   static String get baseUrl {
@@ -33,7 +32,16 @@ class AppConfig {
       return _baseUrlOverride;
     }
 
-    return switch (appEnvironment.toLowerCase()) {
+    final environment = appEnvironment.toLowerCase();
+    if ((environment == 'prod' || environment == 'production') &&
+        _prodBaseUrl.isEmpty) {
+      throw StateError(
+        'Production builds require --dart-define=PROD_API_BASE_URL=... '
+        'or --dart-define=API_BASE_URL=...',
+      );
+    }
+
+    return switch (environment) {
       'prod' || 'production' => _prodBaseUrl,
       'stage' || 'staging' => _stagingBaseUrl,
       _ => _devBaseUrl,

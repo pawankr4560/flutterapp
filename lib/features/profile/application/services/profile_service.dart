@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
 
 class ProfileService {
-  ProfileService({http.Client? client}) : _client = client ?? http.Client();
+  ProfileService({http.Client? client})
+      : _apiClient = ApiClient(client: client);
 
-  final http.Client _client;
+  final ApiClient _apiClient;
 
   Future<Map<String, dynamic>?> updateProfile({
     required String userId,
@@ -18,7 +21,7 @@ class ProfileService {
     String? profileImageUrl,
   }) async {
     if (userId.isEmpty) {
-      throw Exception('User ID is missing. Please login again.');
+      throw const ApiException('User ID is missing. Please login again.');
     }
 
     final uri = Uri.parse('${AppConfig.baseUrl}/Auth/users/$userId/profile');
@@ -37,26 +40,11 @@ class ProfileService {
     addIfPresent('address', address);
     addIfPresent('profileImageUrl', profileImageUrl);
 
-    http.Response response;
-    try {
-      response = await _client.put(
-        uri,
-        headers: {
-          'accept': '*/*',
-          'Content-Type': 'application/json',
-          if (bearerToken.isNotEmpty) 'Authorization': 'Bearer $bearerToken',
-        },
-        body: jsonEncode(body),
-      );
-    } catch (_) {
-      throw Exception('Unable to save profile. Please check your connection.');
-    }
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Unable to save profile. Server returned ${response.statusCode}.',
-      );
-    }
+    final response = await _apiClient.put(
+      uri,
+      bearerToken: bearerToken,
+      body: body,
+    );
 
     if (response.body.trim().isEmpty) {
       return null;

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'package:finhub/features/agriculture/presentation/pages/agriculture_directory_page.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 import 'package:finhub/features/auth/presentation/pages/login_page.dart';
 import 'package:finhub/features/auth/presentation/pages/signup_page.dart';
 import 'package:finhub/features/car_booking/presentation/pages/car_booking_directory_page.dart';
@@ -63,6 +64,33 @@ class AppRoutePaths {
 /// GoRouter configuration for the initial FinHub navigation graph.
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
+  refreshListenable: AuthSession.instance,
+  redirect: (context, state) {
+    const publicRoutes = {
+      AppRoutes.splash,
+      AppRoutes.onboarding,
+      AppRoutes.login,
+      AppRoutes.signup,
+    };
+    final matchedLocation = state.matchedLocation;
+
+    if (matchedLocation == AppRoutes.splash) {
+      return null;
+    }
+
+    if (!AuthSession.instance.isAuthenticated &&
+        !publicRoutes.contains(matchedLocation)) {
+      return AppRoutes.login;
+    }
+
+    if (AuthSession.instance.isAuthenticated &&
+        (matchedLocation == AppRoutes.login ||
+            matchedLocation == AppRoutes.signup)) {
+      return AppRoutes.dashboard;
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: AppRoutes.splash,
