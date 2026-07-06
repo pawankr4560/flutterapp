@@ -15,6 +15,7 @@ class RecentActivityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = _colorFromHex(activity.hexColor);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -41,14 +42,18 @@ class RecentActivityTile extends StatelessWidget {
                   activity.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.titleMedium(context),
+                  style: AppTextStyles.titleMedium(context).copyWith(
+                    color: colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   activity.subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyMedium(context),
+                  style: AppTextStyles.bodyMedium(context).copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -57,7 +62,7 @@ class RecentActivityTile extends StatelessWidget {
           Text(
             activity.timeAgo,
             style: AppTextStyles.bodySmall(context).copyWith(
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],

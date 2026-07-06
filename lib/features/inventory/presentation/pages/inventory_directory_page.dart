@@ -237,7 +237,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     return Theme(
       data: _constructionTheme(context),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -246,11 +246,18 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_titleForTab, style: AppTextStyles.titleMedium(context)),
+              Text(
+                _titleForTab,
+                style: AppTextStyles.titleMedium(context).copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               if (_tabIndex == 0)
                 Text(
                   'Quality Materials, Delivered',
-                  style: AppTextStyles.bodySmall(context),
+                  style: AppTextStyles.bodySmall(context).copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
@@ -784,7 +791,7 @@ class ConstructionQuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.large),
       child: InkWell(
         onTap: onTap,
@@ -824,13 +831,15 @@ class _MaterialCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? _amber.withValues(alpha: 0.12) : AppColors.surface,
+      color: selected
+          ? _amber.withValues(alpha: 0.12)
+          : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.large),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.large),
         child: _ConstructionPanel(
-          borderColor: selected ? _amber : _constructionBorder,
+          borderColor: selected ? _amber : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1242,23 +1251,25 @@ class _SectionHeader extends StatelessWidget {
 class _ConstructionPanel extends StatelessWidget {
   const _ConstructionPanel({
     required this.child,
-    this.borderColor = _constructionBorder,
+    this.borderColor,
   });
 
   final Widget child;
-  final Color borderColor;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: borderColor ?? colorScheme.outline),
         boxShadow: [
           BoxShadow(
-            color: _amberDark.withValues(alpha: 0.07),
+            color: AppColors.overlay,
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -1374,28 +1385,38 @@ class _QuoteRequest {
 const Color _amber = Color(0xFFF59E0B);
 const Color _amberDark = Color(0xFFD97706);
 const Color _blueGray = Color(0xFF475569);
-const Color _constructionBorder = Color(0xFFF1E6D4);
-const Color _constructionTint = Color(0xFFFFF3D8);
 
 ThemeData _constructionTheme(BuildContext context) {
   final base = Theme.of(context);
+  final isDark = base.brightness == Brightness.dark;
+  final baseScheme = base.colorScheme;
   final colorScheme = base.colorScheme.copyWith(
     primary: _amber,
     onPrimary: AppColors.surface,
     primaryContainer: _amber,
     onPrimaryContainer: AppColors.surface,
     secondary: _blueGray,
-    surface: AppColors.surface,
-    surfaceContainerHighest: _constructionTint,
-    outline: _constructionBorder,
+    surface: isDark ? baseScheme.surface : AppColors.surface,
+    onSurface: isDark ? baseScheme.onSurface : AppColors.textPrimary,
+    onSurfaceVariant: isDark
+        ? baseScheme.onSurfaceVariant
+        : AppColors.textSecondary,
+    surfaceContainerHighest:
+        isDark ? baseScheme.surfaceContainerHighest : AppColors.surfaceMuted,
+    outline: isDark ? baseScheme.outline : AppColors.border,
   );
+  final textTheme = AppTextStyles.theme(colorScheme);
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor:
+        isDark ? base.scaffoldBackgroundColor : AppColors.background,
+    textTheme: textTheme,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor: AppColors.background,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor:
+          isDark ? base.scaffoldBackgroundColor : AppColors.background,
+      foregroundColor: colorScheme.onSurface,
+      titleTextStyle: textTheme.titleMedium,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -1408,22 +1429,22 @@ ThemeData _constructionTheme(BuildContext context) {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
         ),
-        textStyle: AppTextStyles.labelLarge(context),
+        textStyle: textTheme.labelLarge,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: _amberDark,
-        side: const BorderSide(color: _constructionBorder),
+        side: BorderSide(color: colorScheme.outline),
         minimumSize: const Size(64, 44),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
         ),
-        textStyle: AppTextStyles.labelLarge(context),
+        textStyle: textTheme.labelLarge,
       ),
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
-      fillColor: AppColors.surface,
+      fillColor: colorScheme.surface,
       prefixIconColor: _amberDark,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.large),
@@ -1431,15 +1452,15 @@ ThemeData _constructionTheme(BuildContext context) {
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       indicatorColor: _amber,
       elevation: 6,
       shadowColor: AppColors.overlay,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        return AppTextStyles.bodyMedium(context).copyWith(
+        return textTheme.bodyMedium!.copyWith(
           color: states.contains(WidgetState.selected)
-              ? AppColors.textPrimary
-              : AppColors.textSecondary,
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant,
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w700
               : FontWeight.w500,
@@ -1449,13 +1470,13 @@ ThemeData _constructionTheme(BuildContext context) {
         return IconThemeData(
           color: states.contains(WidgetState.selected)
               ? AppColors.surface
-              : AppColors.textSecondary,
+              : colorScheme.onSurfaceVariant,
         );
       }),
     ),
     progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
       color: _amber,
-      linearTrackColor: _constructionTint,
+      linearTrackColor: colorScheme.surfaceContainerHighest,
     ),
   );
 }

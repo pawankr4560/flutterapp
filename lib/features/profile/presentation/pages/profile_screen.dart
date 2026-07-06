@@ -52,90 +52,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return AnimatedBuilder(
       animation: AuthSession.instance,
       builder: (context, _) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.xl,
+        return Theme(
+          data: _profileTheme(context),
+          child: Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
+                children: [
+                  Text('Profile', style: AppTextStyles.headlineLarge(context)),
+                  const SizedBox(height: AppSpacing.xl),
+                  _ProfileHeaderCard(
+                    name: _displayName,
+                    email: _displayEmail,
+                    imageUrl: AuthSession.instance.profileImageUrl,
+                    isUploading: _isUploadingProfileImage,
+                    onCameraTap: _uploadProfilePicture,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  _SectionHeader(
+                    title: 'Personal details',
+                    actionLabel: 'Edit',
+                    actionIcon: Icons.edit_outlined,
+                    onAction: _showEditProfileSheet,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _ProfileDetailsPanel(
+                    rows: [
+                      _DetailRowData(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Full name',
+                        value: _displayName,
+                      ),
+                      _DetailRowData(
+                        icon: Icons.mail_outline_rounded,
+                        label: 'Email',
+                        value: _displayEmail,
+                      ),
+                      _DetailRowData(
+                        icon: Icons.phone_outlined,
+                        label: 'Phone',
+                        value: _displayPhone,
+                      ),
+                      _DetailRowData(
+                        icon: Icons.home_outlined,
+                        label: 'Address',
+                        value: _displayAddress,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionHeader(title: 'Loan actions'),
+                  const SizedBox(height: AppSpacing.md),
+                  _ActionCard(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'My loans',
+                    subtitle:
+                        'View applications and upload documents from status',
+                    onTap: () => context.push(AppRoutePaths.loans),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _ActionCard(
+                    icon: Icons.calculate_outlined,
+                    title: 'EMI calculator',
+                    subtitle: 'Estimate monthly repayments',
+                    onTap: () => context.push(AppRoutePaths.calculator),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _ActionCard(
+                    icon: Icons.upload_file_outlined,
+                    title: 'Upload documents',
+                    subtitle:
+                        'Open this from a loan status page to attach an application ID',
+                    onTap: _showUploadDocumentHint,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _SectionHeader(title: 'Account'),
+                  const SizedBox(height: AppSpacing.md),
+                  const _AccountPanel(),
+                  const SizedBox(height: AppSpacing.xl),
+                  _LogoutButton(onTap: _logout),
+                ],
               ),
-              children: [
-                Text('Profile', style: AppTextStyles.headlineLarge(context)),
-                const SizedBox(height: AppSpacing.xl),
-                _ProfileHeaderCard(
-                  name: _displayName,
-                  email: _displayEmail,
-                  imageUrl: AuthSession.instance.profileImageUrl,
-                  isUploading: _isUploadingProfileImage,
-                  onCameraTap: _uploadProfilePicture,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                _SectionHeader(
-                  title: 'Personal details',
-                  actionLabel: 'Edit',
-                  actionIcon: Icons.edit_outlined,
-                  onAction: _showEditProfileSheet,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _ProfileDetailsPanel(
-                  rows: [
-                    _DetailRowData(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Full name',
-                      value: _displayName,
-                    ),
-                    _DetailRowData(
-                      icon: Icons.mail_outline_rounded,
-                      label: 'Email',
-                      value: _displayEmail,
-                    ),
-                    _DetailRowData(
-                      icon: Icons.phone_outlined,
-                      label: 'Phone',
-                      value: _displayPhone,
-                    ),
-                    _DetailRowData(
-                      icon: Icons.home_outlined,
-                      label: 'Address',
-                      value: _displayAddress,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionHeader(title: 'Loan actions'),
-                const SizedBox(height: AppSpacing.md),
-                _ActionCard(
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: 'My loans',
-                  subtitle:
-                      'View applications and upload documents from status',
-                  onTap: () => context.push(AppRoutePaths.loans),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _ActionCard(
-                  icon: Icons.calculate_outlined,
-                  title: 'EMI calculator',
-                  subtitle: 'Estimate monthly repayments',
-                  onTap: () => context.push(AppRoutePaths.calculator),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _ActionCard(
-                  icon: Icons.upload_file_outlined,
-                  title: 'Upload documents',
-                  subtitle:
-                      'Open this from a loan status page to attach an application ID',
-                  onTap: _showUploadDocumentHint,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                const _SectionHeader(title: 'Account'),
-                const SizedBox(height: AppSpacing.md),
-                const _AccountPanel(),
-                const SizedBox(height: AppSpacing.xl),
-                _LogoutButton(onTap: _logout),
-              ],
             ),
           ),
         );
@@ -202,69 +205,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: AppSpacing.lg,
-                right: AppSpacing.lg,
-                top: AppSpacing.lg,
-                bottom:
-                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Edit profile',
-                    style: AppTextStyles.titleLarge(context),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppTextField(
-                    controller: nameController,
-                    labelText: 'Full name',
-                    prefixIcon: Icons.person_outline_rounded,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: phoneController,
-                    labelText: 'Phone',
-                    prefixIcon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: addressController,
-                    labelText: 'Address',
-                    prefixIcon: Icons.home_outlined,
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  PrimaryButton(
-                    text: 'Save changes',
-                    loading: isSaving,
-                    onPressed: () async {
-                      setSheetState(() => isSaving = true);
-                      await _saveProfile(
-                        name: nameController.text.trim(),
-                        phone: phoneController.text.trim(),
-                        address: addressController.text.trim(),
-                      );
-                      if (sheetContext.mounted) {
-                        Navigator.of(sheetContext).pop();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
+        return Theme(
+          data: _profileTheme(sheetContext),
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: AppSpacing.lg,
+                  right: AppSpacing.lg,
+                  top: AppSpacing.lg,
+                  bottom:
+                      MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Edit profile',
+                      style: AppTextStyles.titleLarge(context),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppTextField(
+                      controller: nameController,
+                      labelText: 'Full name',
+                      prefixIcon: Icons.person_outline_rounded,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      controller: phoneController,
+                      labelText: 'Phone',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      controller: addressController,
+                      labelText: 'Address',
+                      prefixIcon: Icons.home_outlined,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    PrimaryButton(
+                      text: 'Save changes',
+                      loading: isSaving,
+                      onPressed: () async {
+                        setSheetState(() => isSaving = true);
+                        await _saveProfile(
+                          name: nameController.text.trim(),
+                          phone: phoneController.text.trim(),
+                          address: addressController.text.trim(),
+                        );
+                        if (sheetContext.mounted) {
+                          Navigator.of(sheetContext).pop();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -272,6 +278,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     nameController.dispose();
     phoneController.dispose();
     addressController.dispose();
+  }
+
+  ThemeData _profileTheme(BuildContext context) {
+    final base = Theme.of(context);
+    final colorScheme = base.colorScheme;
+
+    return base.copyWith(
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        fillColor: colorScheme.surface,
+        prefixIconColor: AppColors.primary,
+        hintStyle: base.textTheme.bodyMedium,
+        labelStyle: base.textTheme.bodyMedium,
+      ),
+      bottomSheetTheme: base.bottomSheetTheme.copyWith(
+        backgroundColor: colorScheme.surface,
+        modalBackgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+      ),
+    );
   }
 
   Future<void> _saveProfile({
@@ -373,7 +398,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.bodyLarge(
                     context,
-                  ).copyWith(color: AppColors.textSecondary),
+                  ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 const _SecureAccountBadge(),
@@ -418,7 +443,7 @@ class _Avatar extends StatelessWidget {
                     initial,
                     style: AppTextStyles.headlineLarge(
                       context,
-                    ).copyWith(color: AppColors.surface),
+                    ).copyWith(color: Theme.of(context).colorScheme.onPrimary),
                   )
                 : null,
           ),
@@ -426,9 +451,9 @@ class _Avatar extends StatelessWidget {
             right: -2,
             bottom: 0,
             child: Material(
-              color: AppColors.surface,
-              shape: const CircleBorder(
-                side: BorderSide(color: AppColors.border),
+              color: Theme.of(context).colorScheme.surface,
+              shape: CircleBorder(
+                side: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               child: InkWell(
                 customBorder: const CircleBorder(),
@@ -466,15 +491,15 @@ class _SecureAccountBadge extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.lock_outline_rounded,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             size: 18,
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -482,7 +507,7 @@ class _SecureAccountBadge extends StatelessWidget {
             'Secure account',
             style: AppTextStyles.labelLarge(
               context,
-            ).copyWith(color: AppColors.textSecondary),
+            ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -539,7 +564,10 @@ class _ProfileDetailsPanel extends StatelessWidget {
           for (var index = 0; index < rows.length; index++) ...[
             _DetailRow(data: rows[index]),
             if (index != rows.length - 1)
-              const Divider(height: 1, color: AppColors.border),
+              Divider(
+                height: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
           ],
         ],
       ),
@@ -581,7 +609,7 @@ class _DetailRow extends StatelessWidget {
                   data.label,
                   style: AppTextStyles.bodyLarge(
                     context,
-                  ).copyWith(color: AppColors.textSecondary),
+                  ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(data.value, style: AppTextStyles.titleLarge(context)),
@@ -628,15 +656,15 @@ class _ActionCard extends StatelessWidget {
                     subtitle,
                     style: AppTextStyles.bodyLarge(
                       context,
-                    ).copyWith(color: AppColors.textSecondary),
+                    ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               size: 32,
             ),
           ],
@@ -654,17 +682,20 @@ class _AccountPanel extends StatelessWidget {
     return _CardSurface(
       padding: EdgeInsets.zero,
       child: Column(
-        children: const [
-          _AccountRow(
+        children: [
+          const _AccountRow(
             icon: Icons.verified_user_outlined,
             title: 'Session',
             value: 'Active',
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Divider(height: 1, color: AppColors.border),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Divider(
+              height: 1,
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
-          _AccountRow(
+          const _AccountRow(
             icon: Icons.fact_check_outlined,
             title: 'Required KYC',
             value: 'PAN and Aadhaar',
@@ -703,7 +734,7 @@ class _AccountRow extends StatelessWidget {
               textAlign: TextAlign.end,
               style: AppTextStyles.bodyLarge(
                 context,
-              ).copyWith(color: AppColors.textSecondary),
+              ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ],
@@ -750,9 +781,9 @@ class _CardSurface extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: child,
     );
@@ -762,7 +793,7 @@ class _CardSurface extends StatelessWidget {
     }
 
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.xl),

@@ -21,6 +21,7 @@ class DashboardBottomNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(dashboardTabProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
       top: false,
@@ -31,11 +32,14 @@ class DashboardBottomNavBar extends ConsumerWidget {
           AppSpacing.lg,
           AppSpacing.md,
         ),
-        padding: const EdgeInsets.all(AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: AppColors.border),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outline),
           boxShadow: const [
             BoxShadow(
               color: AppColors.overlay,
@@ -44,19 +48,22 @@ class DashboardBottomNavBar extends ConsumerWidget {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            for (var index = 0; index < _tabs.length; index++)
-              Expanded(
-                child: _BottomNavItem(
-                  tab: _tabs[index],
-                  isActive: selectedIndex == index,
-                  onTap: () {
-                    ref.read(dashboardTabProvider.notifier).selectTab(index);
-                  },
+        child: SizedBox(
+          height: 58,
+          child: Row(
+            children: [
+              for (var index = 0; index < _tabs.length; index++)
+                Expanded(
+                  child: _BottomNavItem(
+                    tab: _tabs[index],
+                    isActive: selectedIndex == index,
+                    onTap: () {
+                      ref.read(dashboardTabProvider.notifier).selectTab(index);
+                    },
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -77,37 +84,68 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final foregroundColor =
-        isActive ? AppColors.primary : AppColors.textSecondary;
+        isActive ? AppColors.primary : colorScheme.onSurfaceVariant;
     final backgroundColor =
-        isActive ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface;
+        isActive ? AppColors.primary.withValues(alpha: 0.1) : colorScheme.surface;
 
-    return Material(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xs,
-            vertical: AppSpacing.sm,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(tab.icon, color: foregroundColor),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                tab.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodySmall(context).copyWith(
-                  color: foregroundColor,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                ),
+    return Center(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        child: Material(
+          color: AppColors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.large),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
               ),
-            ],
+              child: isActive
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(tab.icon, color: foregroundColor, size: 22),
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            tab.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodySmall(context).copyWith(
+                              color: foregroundColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(tab.icon, color: foregroundColor, size: 22),
+                        const SizedBox(height: AppSpacing.xxs),
+                        Text(
+                          tab.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall(context).copyWith(
+                            color: foregroundColor,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),

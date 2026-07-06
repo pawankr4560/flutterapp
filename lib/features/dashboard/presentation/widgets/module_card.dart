@@ -17,9 +17,10 @@ class ModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final accentColor = module.isEnabled
         ? _colorFromHex(module.hexColor)
-        : AppColors.border;
+        : colorScheme.outline;
     final VoidCallback? effectiveOnTap = module.isEnabled
         ? () {
             onTap?.call();
@@ -28,7 +29,9 @@ class ModuleCard extends StatelessWidget {
         : null;
 
     return Material(
-      color: module.isEnabled ? AppColors.surface : AppColors.surfaceMuted,
+      color: module.isEnabled
+          ? colorScheme.surface
+          : colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(AppRadius.large),
       child: InkWell(
         onTap: effectiveOnTap,
@@ -41,7 +44,7 @@ class ModuleCard extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.large),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colorScheme.outline),
             boxShadow: const [
               BoxShadow(
                 color: AppColors.overlay,
@@ -74,7 +77,7 @@ class ModuleCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.titleMedium(context).copyWith(
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                       fontSize: 14,
                       height: 1.2,
                     ),
@@ -87,7 +90,7 @@ class ModuleCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.bodySmall(context).copyWith(
                       color: module.isEnabled
-                          ? AppColors.textSecondary
+                          ? colorScheme.onSurfaceVariant
                           : AppColors.textMuted,
                       height: 1.25,
                     ),

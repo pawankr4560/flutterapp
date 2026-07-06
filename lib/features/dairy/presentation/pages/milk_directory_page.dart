@@ -94,7 +94,7 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
     return Theme(
       data: _dairyTheme(context),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -103,11 +103,18 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_titleForTab, style: AppTextStyles.titleMedium(context)),
+              Text(
+                _titleForTab,
+                style: AppTextStyles.titleMedium(context).copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               if (_tabIndex == 0)
                 Text(
                   'Manage your dairy business',
-                  style: AppTextStyles.bodySmall(context),
+                  style: AppTextStyles.bodySmall(context).copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
@@ -1099,7 +1106,7 @@ class _DairyQuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.large),
       child: InkWell(
         onTap: onTap,
@@ -1285,9 +1292,9 @@ class _CustomerCard extends StatelessWidget {
               ),
             ],
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right_rounded,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
       ),
@@ -1605,15 +1612,17 @@ class _DairyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.large),
-        border: Border.all(color: const Color(0xFFE2F2EF)),
+        border: Border.all(color: colorScheme.outline),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F766E).withValues(alpha: 0.07),
+            color: AppColors.overlay,
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -1747,7 +1756,10 @@ class _DetailPill extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AppTextStyles.bodySmall(
             context,
-          ).copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+          ).copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -1900,27 +1912,38 @@ class _PaymentEntry {
 
 const Color _teal = Color(0xFF14B8D0);
 const Color _tealDark = Color(0xFF0891B2);
-const Color _dairyTint = Color(0xFFE7F8FB);
 
 ThemeData _dairyTheme(BuildContext context) {
   final base = Theme.of(context);
+  final isDark = base.brightness == Brightness.dark;
+  final baseScheme = base.colorScheme;
   final colorScheme = base.colorScheme.copyWith(
     primary: _teal,
     onPrimary: AppColors.surface,
     primaryContainer: _teal,
     onPrimaryContainer: AppColors.surface,
     secondary: _tealDark,
-    surface: AppColors.surface,
-    surfaceContainerHighest: _dairyTint,
-    outline: const Color(0xFFD7EEF2),
+    surface: isDark ? baseScheme.surface : AppColors.surface,
+    onSurface: isDark ? baseScheme.onSurface : AppColors.textPrimary,
+    onSurfaceVariant: isDark
+        ? baseScheme.onSurfaceVariant
+        : AppColors.textSecondary,
+    surfaceContainerHighest:
+        isDark ? baseScheme.surfaceContainerHighest : AppColors.surfaceMuted,
+    outline: isDark ? baseScheme.outline : AppColors.border,
   );
+  final textTheme = AppTextStyles.theme(colorScheme);
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor:
+        isDark ? base.scaffoldBackgroundColor : AppColors.background,
+    textTheme: textTheme,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor: AppColors.background,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor:
+          isDark ? base.scaffoldBackgroundColor : AppColors.background,
+      foregroundColor: colorScheme.onSurface,
+      titleTextStyle: textTheme.titleMedium,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -1936,20 +1959,20 @@ ThemeData _dairyTheme(BuildContext context) {
       style: FilledButton.styleFrom(
         backgroundColor: _teal,
         foregroundColor: AppColors.surface,
-        disabledBackgroundColor: AppColors.border,
-        disabledForegroundColor: AppColors.textSecondary,
+        disabledBackgroundColor: colorScheme.outline,
+        disabledForegroundColor: colorScheme.onSurfaceVariant,
         minimumSize: const Size(64, 52),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
         ),
-        textStyle: AppTextStyles.labelLarge(context),
+        textStyle: textTheme.labelLarge,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(foregroundColor: AppColors.textPrimary),
+      style: IconButton.styleFrom(foregroundColor: colorScheme.onSurface),
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
-      fillColor: AppColors.surface,
+      fillColor: colorScheme.surface,
       prefixIconColor: _teal,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.large),
@@ -1961,20 +1984,20 @@ ThemeData _dairyTheme(BuildContext context) {
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
               ? _teal
-              : AppColors.surface;
+              : colorScheme.surface;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
               ? AppColors.surface
-              : AppColors.textPrimary;
+              : colorScheme.onSurface;
         }),
         iconColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
               ? AppColors.surface
-              : AppColors.textSecondary;
+              : colorScheme.onSurfaceVariant;
         }),
         side: WidgetStateProperty.all(
-          const BorderSide(color: Color(0xFFD7EEF2)),
+          BorderSide(color: colorScheme.outline),
         ),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
@@ -1984,15 +2007,15 @@ ThemeData _dairyTheme(BuildContext context) {
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       indicatorColor: _teal,
       elevation: 6,
       shadowColor: AppColors.overlay,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        return AppTextStyles.bodyMedium(context).copyWith(
+        return textTheme.bodyMedium!.copyWith(
           color: states.contains(WidgetState.selected)
-              ? AppColors.textPrimary
-              : AppColors.textSecondary,
+              ? colorScheme.onSurface
+              : colorScheme.onSurfaceVariant,
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w700
               : FontWeight.w500,
@@ -2002,18 +2025,18 @@ ThemeData _dairyTheme(BuildContext context) {
         return IconThemeData(
           color: states.contains(WidgetState.selected)
               ? AppColors.surface
-              : AppColors.textSecondary,
+              : colorScheme.onSurfaceVariant,
         );
       }),
     ),
     progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
       color: _teal,
-      linearTrackColor: _dairyTint,
+      linearTrackColor: colorScheme.surfaceContainerHighest,
     ),
     bottomSheetTheme: base.bottomSheetTheme.copyWith(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       surfaceTintColor: Colors.transparent,
-      modalBackgroundColor: AppColors.surface,
+      modalBackgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:finhub/app/theme_controller.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
@@ -7,13 +9,14 @@ import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 /// App-style dashboard header with greeting and wallet summary.
-class DashboardHeader extends StatelessWidget {
+class DashboardHeader extends ConsumerWidget {
   const DashboardHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final userName = AuthSession.instance.userName.trim();
     final firstName = userName.isEmpty ? 'Ravi' : userName.split(' ').first;
+    final themeMode = ref.watch(themeModeProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,12 +36,21 @@ class DashboardHeader extends StatelessWidget {
                   Text(
                     'Good Morning',
                     style: AppTextStyles.bodySmall(context).copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
+            _ThemeCycleButton(
+              themeMode: themeMode,
+              onTap: () {
+                ref
+                    .read(themeModeProvider.notifier)
+                    .setThemeMode(_nextThemeMode(themeMode));
+              },
+            ),
+            const SizedBox(width: AppSpacing.xs),
             const _NotificationButton(),
           ],
         ),
@@ -89,6 +101,76 @@ class DashboardHeader extends StatelessWidget {
       ],
     );
   }
+
+  ThemeMode _nextThemeMode(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => ThemeMode.system,
+      ThemeMode.system => ThemeMode.dark,
+      ThemeMode.dark => ThemeMode.light,
+    };
+  }
+}
+
+class _ThemeCycleButton extends StatelessWidget {
+  const _ThemeCycleButton({
+    required this.themeMode,
+    required this.onTap,
+  });
+
+  final ThemeMode themeMode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Theme: ${_label(themeMode)}',
+      child: _HeaderIconMaterial(
+        icon: _icon(themeMode),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  IconData _icon(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => Icons.light_mode_outlined,
+      ThemeMode.system => Icons.phone_android_rounded,
+      ThemeMode.dark => Icons.dark_mode_outlined,
+    };
+  }
+
+  String _label(ThemeMode mode) {
+    return switch (mode) {
+      ThemeMode.light => 'Light',
+      ThemeMode.system => 'System',
+      ThemeMode.dark => 'Dark',
+    };
+  }
+}
+
+class _HeaderIconMaterial extends StatelessWidget {
+  const _HeaderIconMaterial({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: colorScheme.surface,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox.square(
+          dimension: AppSpacing.xxl,
+          child: Icon(icon, color: colorScheme.onSurface),
+        ),
+      ),
+    );
+  }
 }
 
 class _NotificationButton extends StatelessWidget {
@@ -99,20 +181,9 @@ class _NotificationButton extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          color: AppColors.surface,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: () {},
-            child: const SizedBox.square(
-              dimension: AppSpacing.xxl,
-              child: Icon(
-                Icons.notifications_none_rounded,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
+        _HeaderIconMaterial(
+          icon: Icons.notifications_none_rounded,
+          onTap: () {},
         ),
         Positioned(
           right: AppSpacing.sm,
@@ -139,7 +210,7 @@ class _ViewWalletButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.medium),
       child: InkWell(
         onTap: onTap,
