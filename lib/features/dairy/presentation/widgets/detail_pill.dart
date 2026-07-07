@@ -15,16 +15,14 @@ class _DetailPill extends StatelessWidget {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFFAF7),
+          color: AppColors.successSurface,
           borderRadius: BorderRadius.circular(AppRadius.medium),
         ),
         child: Text(
           '$label: $value',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.bodySmall(
-            context,
-          ).copyWith(
+          style: AppTextStyles.bodySmall(context).copyWith(
             color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
@@ -33,4 +31,3 @@ class _DetailPill extends StatelessWidget {
     );
   }
 }
-

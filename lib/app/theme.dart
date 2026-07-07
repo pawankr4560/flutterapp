@@ -93,8 +93,9 @@ class FinHubTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.textPrimary,
-        contentTextStyle:
-            textTheme.bodyMedium?.copyWith(color: AppColors.surface),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.surface,
+        ),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actionTextColor: AppColors.secondary,
@@ -116,10 +117,10 @@ class FinHubTheme {
       onSecondary: AppColors.surface,
       error: AppColors.error,
       onError: AppColors.surface,
-      surface: Color(0xFF111827),
+      surface: AppColors.darkSurface,
       onSurface: AppColors.surface,
-      onSurfaceVariant: Color(0xFFD1D5DB),
-      outline: Color(0xFF374151),
+      onSurfaceVariant: AppColors.darkTextSecondary,
+      outline: AppColors.darkBorder,
       shadow: AppColors.overlay,
     );
     final textTheme = AppTextStyles.theme(colorScheme);
@@ -128,11 +129,11 @@ class FinHubTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0F172A),
+      scaffoldBackgroundColor: AppColors.darkBackground,
       textTheme: textTheme,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0F172A),
+        backgroundColor: AppColors.darkBackground,
         foregroundColor: AppColors.surface,
         centerTitle: false,
         elevation: 0,
@@ -194,8 +195,9 @@ class FinHubTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surface,
-        contentTextStyle:
-            textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: AppColors.textPrimary,
+        ),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actionTextColor: AppColors.secondary,
@@ -215,5 +217,3 @@ class FinHubTheme {
     );
   }
 }
-
-

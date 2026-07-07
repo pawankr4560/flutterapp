@@ -16,11 +16,12 @@ class _TotalBanner extends StatelessWidget {
           ),
           Text(
             _money(amount),
-            style: AppTextStyles.titleLarge(context).copyWith(color: _teal),
+            style: AppTextStyles.titleLarge(
+              context,
+            ).copyWith(color: AppColors.primary),
           ),
         ],
       ),
     );
   }
 }
-

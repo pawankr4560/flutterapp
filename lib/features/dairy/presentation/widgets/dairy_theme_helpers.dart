@@ -1,45 +1,45 @@
 part of '../pages/milk_directory_page.dart';
 
-const Color _teal = Color(0xFF14B8D0);
-const Color _tealDark = Color(0xFF0891B2);
-
 ThemeData _dairyTheme(BuildContext context) {
   final base = Theme.of(context);
   final isDark = base.brightness == Brightness.dark;
   final baseScheme = base.colorScheme;
   final colorScheme = base.colorScheme.copyWith(
-    primary: _teal,
+    primary: AppColors.primary,
     onPrimary: AppColors.surface,
-    primaryContainer: _teal,
+    primaryContainer: AppColors.primary,
     onPrimaryContainer: AppColors.surface,
-    secondary: _tealDark,
+    secondary: AppColors.accentDark,
     surface: isDark ? baseScheme.surface : AppColors.surface,
     onSurface: isDark ? baseScheme.onSurface : AppColors.textPrimary,
     onSurfaceVariant: isDark
         ? baseScheme.onSurfaceVariant
         : AppColors.textSecondary,
-    surfaceContainerHighest:
-        isDark ? baseScheme.surfaceContainerHighest : AppColors.surfaceMuted,
+    surfaceContainerHighest: isDark
+        ? baseScheme.surfaceContainerHighest
+        : AppColors.surfaceMuted,
     outline: isDark ? baseScheme.outline : AppColors.border,
   );
   final textTheme = AppTextStyles.theme(colorScheme);
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor:
-        isDark ? base.scaffoldBackgroundColor : AppColors.background,
+    scaffoldBackgroundColor: isDark
+        ? base.scaffoldBackgroundColor
+        : AppColors.background,
     textTheme: textTheme,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor:
-          isDark ? base.scaffoldBackgroundColor : AppColors.background,
+      backgroundColor: isDark
+          ? base.scaffoldBackgroundColor
+          : AppColors.background,
       foregroundColor: colorScheme.onSurface,
       titleTextStyle: textTheme.titleMedium,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
     ),
     floatingActionButtonTheme: base.floatingActionButtonTheme.copyWith(
-      backgroundColor: _teal,
+      backgroundColor: AppColors.primary,
       foregroundColor: AppColors.surface,
       extendedTextStyle: AppTextStyles.labelLarge(
         context,
@@ -47,7 +47,7 @@ ThemeData _dairyTheme(BuildContext context) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: _teal,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.surface,
         disabledBackgroundColor: colorScheme.outline,
         disabledForegroundColor: colorScheme.onSurfaceVariant,
@@ -63,17 +63,17 @@ ThemeData _dairyTheme(BuildContext context) {
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
       fillColor: colorScheme.surface,
-      prefixIconColor: _teal,
+      prefixIconColor: AppColors.primary,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.large),
-        borderSide: const BorderSide(color: _teal, width: 1.4),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? _teal
+              ? AppColors.primary
               : colorScheme.surface;
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
@@ -86,9 +86,7 @@ ThemeData _dairyTheme(BuildContext context) {
               ? AppColors.surface
               : colorScheme.onSurfaceVariant;
         }),
-        side: WidgetStateProperty.all(
-          BorderSide(color: colorScheme.outline),
-        ),
+        side: WidgetStateProperty.all(BorderSide(color: colorScheme.outline)),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -98,7 +96,7 @@ ThemeData _dairyTheme(BuildContext context) {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: colorScheme.surface,
-      indicatorColor: _teal,
+      indicatorColor: AppColors.primary,
       elevation: 6,
       shadowColor: AppColors.overlay,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -120,12 +118,12 @@ ThemeData _dairyTheme(BuildContext context) {
       }),
     ),
     progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
-      color: _teal,
+      color: AppColors.primary,
       linearTrackColor: colorScheme.surfaceContainerHighest,
     ),
     bottomSheetTheme: base.bottomSheetTheme.copyWith(
       backgroundColor: colorScheme.surface,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       modalBackgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),

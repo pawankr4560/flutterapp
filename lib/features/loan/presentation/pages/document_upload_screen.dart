@@ -15,10 +15,7 @@ import 'package:finhub/features/loan/application/services/loan_service.dart';
 import 'package:finhub/features/loan/data/models/document_requests.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
-  const DocumentUploadScreen({
-    super.key,
-    required this.applicationId,
-  });
+  const DocumentUploadScreen({super.key, required this.applicationId});
 
   final String? applicationId;
 
@@ -32,10 +29,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   bool _isSubmitting = false;
 
   List<DocumentItem> _documents = const [
-    DocumentItem(
-      name: 'PAN card',
-      status: DocumentUploadStatus.notUploaded,
-    ),
+    DocumentItem(name: 'PAN card', status: DocumentUploadStatus.notUploaded),
     DocumentItem(
       name: 'Aadhaar card',
       status: DocumentUploadStatus.notUploaded,
@@ -91,8 +85,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           document.name,
           status: document.filePath == null
               ? document.cloudinaryUrl == null
-                  ? DocumentUploadStatus.notUploaded
-                  : DocumentUploadStatus.uploaded
+                    ? DocumentUploadStatus.notUploaded
+                    : DocumentUploadStatus.uploaded
               : DocumentUploadStatus.uploaded,
           filePath: document.filePath,
           fileName: document.fileName,
@@ -131,9 +125,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         fileName: document.fileName,
         cloudinaryUrl: document.cloudinaryUrl,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -178,7 +172,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       documents: _documents
           .where(
             (document) =>
-                document.cloudinaryUrl != null && document.cloudinaryUrl!.isNotEmpty,
+                document.cloudinaryUrl != null &&
+                document.cloudinaryUrl!.isNotEmpty,
           )
           .map(
             (document) => LoanDocument(
@@ -195,7 +190,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         AuthSession.instance.bearerToken,
       );
       final responseBody = jsonDecode(response.body) as Map<String, dynamic>?;
-      final success = responseBody?['success'] == true ||
+      final success =
+          responseBody?['success'] == true ||
           (responseBody?['success'] != false &&
               response.statusCode >= 200 &&
               response.statusCode < 300);
@@ -220,9 +216,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) {
@@ -254,16 +250,18 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             ..._documents.map(
               (document) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: _DocumentUploadCard(
-                    document: document,
-                    onTap: () => _pickDocument(document),
+                child: _DocumentUploadCard(
+                  document: document,
+                  onTap: () => _pickDocument(document),
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             AppButton(
               label: _isSubmitting ? 'Submitting...' : 'Submit application',
-              onPressed: !_canSubmit || _isSubmitting ? null : _submitApplication,
+              onPressed: !_canSubmit || _isSubmitting
+                  ? null
+                  : _submitApplication,
             ),
           ],
         ),
@@ -273,10 +271,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 }
 
 class _DocumentUploadCard extends StatelessWidget {
-  const _DocumentUploadCard({
-    required this.document,
-    required this.onTap,
-  });
+  const _DocumentUploadCard({required this.document, required this.onTap});
 
   final DocumentItem document;
   final VoidCallback onTap;
@@ -289,8 +284,10 @@ class _DocumentUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = _isUploaded ? _successGreen : AppColors.border;
-    final backgroundColor = _isUploaded ? _successSurface : AppColors.surface;
+    final borderColor = _isUploaded ? AppColors.success : AppColors.border;
+    final backgroundColor = _isUploaded
+        ? AppColors.successSurface
+        : AppColors.surface;
 
     return Material(
       color: backgroundColor,
@@ -313,7 +310,9 @@ class _DocumentUploadCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        document.isRequired ? '${document.name} *' : document.name,
+                        document.isRequired
+                            ? '${document.name} *'
+                            : document.name,
                         style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 16,
@@ -325,10 +324,10 @@ class _DocumentUploadCard extends StatelessWidget {
                         _supportingText,
                         style: TextStyle(
                           color: _isUploaded
-                              ? _successGreen
+                              ? AppColors.success
                               : _isFailed
-                                  ? Colors.redAccent
-                                  : AppColors.textSecondary,
+                              ? AppColors.error
+                              : AppColors.textSecondary,
                           fontWeight: _isUploaded
                               ? FontWeight.w700
                               : FontWeight.w500,
@@ -340,7 +339,7 @@ class _DocumentUploadCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.md),
                 Icon(
                   _isUploaded ? Icons.check_circle : Icons.upload_file,
-                  color: _isUploaded ? _successGreen : AppColors.accent,
+                  color: _isUploaded ? AppColors.success : AppColors.accent,
                 ),
               ],
             ),
@@ -394,23 +393,23 @@ class _StatusIcon extends StatelessWidget {
       height: 42,
       decoration: BoxDecoration(
         color: isUploaded
-            ? _successGreen
+            ? AppColors.success
             : isFailed
-                ? Colors.redAccent.withValues(alpha: 0.1)
-                : AppColors.surfaceMuted,
+            ? AppColors.errorSurface
+            : AppColors.surfaceMuted,
         shape: BoxShape.circle,
       ),
       child: Icon(
         isUploaded
             ? Icons.check
             : isFailed
-                ? Icons.error_outline
-                : Icons.upload_outlined,
+            ? Icons.error_outline
+            : Icons.upload_outlined,
         color: isUploaded
-            ? Colors.white
+            ? AppColors.surface
             : isFailed
-                ? Colors.redAccent
-                : AppColors.accent,
+            ? AppColors.error
+            : AppColors.accent,
       ),
     );
   }
@@ -442,20 +441,14 @@ class _DashedBorder extends StatelessWidget {
     }
 
     return CustomPaint(
-      painter: _DashedBorderPainter(
-        color: color,
-        borderRadius: borderRadius,
-      ),
+      painter: _DashedBorderPainter(color: color, borderRadius: borderRadius),
       child: child,
     );
   }
 }
 
 class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter({
-    required this.color,
-    required this.borderRadius,
-  });
+  const _DashedBorderPainter({required this.color, required this.borderRadius});
 
   final Color color;
   final double borderRadius;
@@ -480,10 +473,7 @@ class _DashedBorderPainter extends CustomPainter {
 
       while (distance < metric.length) {
         final nextDistance = distance + dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, nextDistance),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, nextDistance), paint);
         distance = nextDistance + dashSpace;
       }
     }
@@ -495,10 +485,3 @@ class _DashedBorderPainter extends CustomPainter {
         oldDelegate.borderRadius != borderRadius;
   }
 }
-
-const Color _successGreen = Color(0xFF16A34A);
-const Color _successSurface = Color(0xFFEFFAF3);
-
-
-
-

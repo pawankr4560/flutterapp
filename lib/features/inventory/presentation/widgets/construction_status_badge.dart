@@ -9,10 +9,10 @@ class ConstructionStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (label.toLowerCase()) {
       'pending' => AppColors.warning,
-      'confirmed' || 'out for delivery' || 'loading' => _blueGray,
+      'confirmed' || 'out for delivery' || 'loading' => AppColors.textSecondary,
       'delivered' || 'available' => AppColors.success,
       'cancelled' => AppColors.error,
-      _ => _amberDark,
+      _ => AppColors.accentDark,
     };
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -32,4 +32,3 @@ class ConstructionStatusBadge extends StatelessWidget {
     );
   }
 }
-

@@ -294,7 +294,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bottomSheetTheme: base.bottomSheetTheme.copyWith(
         backgroundColor: colorScheme.surface,
         modalBackgroundColor: colorScheme.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
       ),
     );
   }

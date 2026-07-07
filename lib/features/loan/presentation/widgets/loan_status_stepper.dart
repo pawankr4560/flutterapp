@@ -4,10 +4,7 @@ import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_theme.dart';
 
 class LoanStatusStepper extends StatelessWidget {
-  const LoanStatusStepper({
-    super.key,
-    required this.currentStep,
-  });
+  const LoanStatusStepper({super.key, required this.currentStep});
 
   final int currentStep;
 
@@ -44,7 +41,9 @@ class LoanStatusStepper extends StatelessWidget {
                     child: Text(
                       '${stepIndex + 1}',
                       style: TextStyle(
-                        color: isActive ? Colors.white : AppColors.textSecondary,
+                        color: isActive
+                            ? AppColors.surface
+                            : AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -56,7 +55,9 @@ class LoanStatusStepper extends StatelessWidget {
                   _steps[stepIndex],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
+                    color: isActive
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -69,12 +70,12 @@ class LoanStatusStepper extends StatelessWidget {
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             height: 2,
-            color: index ~/ 2 < currentStep ? AppColors.accent : AppColors.border,
+            color: index ~/ 2 < currentStep
+                ? AppColors.accent
+                : AppColors.border,
           ),
         );
       }),
     );
   }
 }
-
-

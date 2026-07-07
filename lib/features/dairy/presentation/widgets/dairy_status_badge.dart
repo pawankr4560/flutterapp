@@ -12,7 +12,7 @@ class _DairyStatusBadge extends StatelessWidget {
         ? AppColors.success
         : lower == 'pending'
         ? AppColors.warning
-        : _teal;
+        : AppColors.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -32,4 +32,3 @@ class _DairyStatusBadge extends StatelessWidget {
     );
   }
 }
-

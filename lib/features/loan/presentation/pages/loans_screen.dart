@@ -102,7 +102,10 @@ class _LoansScreenState extends State<LoansScreen> {
                       const Expanded(
                         child: Text(
                           'Your applications',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -167,7 +170,8 @@ class _LoansScreenState extends State<LoansScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: applications.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, index) {
                     final application = applications[index];
                     return ListTile(
@@ -176,8 +180,12 @@ class _LoansScreenState extends State<LoansScreen> {
                         side: const BorderSide(color: AppColors.border),
                       ),
                       title: Text(application.type),
-                      subtitle: Text('ID: ${application.id} | ${application.status}'),
-                      trailing: Text('Rs. ${application.amount.toStringAsFixed(0)}'),
+                      subtitle: Text(
+                        'ID: ${application.id} | ${application.status}',
+                      ),
+                      trailing: Text(
+                        'Rs. ${application.amount.toStringAsFixed(0)}',
+                      ),
                       onTap: () {
                         Navigator.of(context).pop();
                         _openStatus(application.id);
@@ -215,7 +223,7 @@ class _ApplicationsError extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Unable to load applications.',
@@ -288,6 +296,3 @@ class _LoanOffer {
   final String amountLabel;
   final String interestRateLabel;
 }
-
-
-

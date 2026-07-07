@@ -220,7 +220,7 @@ class _LoginCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.shadowSubtle,
             blurRadius: AppSpacing.md,
             offset: Offset(0, AppSpacing.xs),
           ),

@@ -13,7 +13,7 @@ class _EstimatePanel extends StatelessWidget {
         children: [
           Icon(
             quoteOnly ? Icons.info_outline_rounded : Icons.payments_rounded,
-            color: _amberDark,
+            color: AppColors.accentDark,
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -29,4 +29,3 @@ class _EstimatePanel extends StatelessWidget {
     );
   }
 }
-

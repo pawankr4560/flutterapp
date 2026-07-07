@@ -15,14 +15,14 @@ class _MaterialCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? _amber.withValues(alpha: 0.12)
+          ? AppColors.primary.withValues(alpha: 0.12)
           : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.large),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.large),
         child: _ConstructionPanel(
-          borderColor: selected ? _amber : null,
+          borderColor: selected ? AppColors.primary : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,4 +50,3 @@ class _MaterialCategoryCard extends StatelessWidget {
     );
   }
 }
-

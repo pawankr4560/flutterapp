@@ -11,11 +11,10 @@ class _SoftIcon extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: _teal.withValues(alpha: 0.12),
+        color: AppColors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
-      child: Icon(icon, color: _teal, size: 22),
+      child: Icon(icon, color: AppColors.primary, size: 22),
     );
   }
 }
-

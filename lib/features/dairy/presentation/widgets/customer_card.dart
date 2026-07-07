@@ -11,8 +11,8 @@ class _CustomerCard extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _teal.withValues(alpha: 0.12),
-            foregroundColor: _teal,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+            foregroundColor: AppColors.primary,
             child: Text(customer.name.characters.first),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -46,4 +46,3 @@ class _CustomerCard extends StatelessWidget {
     );
   }
 }
-

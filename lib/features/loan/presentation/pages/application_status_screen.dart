@@ -15,7 +15,8 @@ class ApplicationStatusScreen extends StatefulWidget {
   final String? applicationId;
 
   @override
-  State<ApplicationStatusScreen> createState() => _ApplicationStatusScreenState();
+  State<ApplicationStatusScreen> createState() =>
+      _ApplicationStatusScreenState();
 }
 
 class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
@@ -83,8 +84,8 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                       Text(
                         'Application ID',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
@@ -167,10 +168,7 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
 }
 
 class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({
-    required this.stage,
-    required this.isLast,
-  });
+  const _TimelineRow({required this.stage, required this.isLast});
 
   final LoanStatusStage stage;
   final bool isLast;
@@ -295,10 +293,10 @@ class _TimelineIndicator extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: const BoxDecoration(
-            color: _successGreen,
+            color: AppColors.success,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check, color: Colors.white, size: 18),
+          child: const Icon(Icons.check, color: AppColors.surface, size: 18),
         );
       case _TimelineStatus.inProgress:
         return Container(
@@ -334,13 +332,4 @@ class _TimelineIndicator extends StatelessWidget {
   }
 }
 
-enum _TimelineStatus {
-  done,
-  inProgress,
-  pending,
-}
-
-const Color _successGreen = Color(0xFF16A34A);
-
-
-
+enum _TimelineStatus { done, inProgress, pending }

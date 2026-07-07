@@ -1,47 +1,46 @@
 part of '../pages/inventory_directory_page.dart';
 
-const Color _amber = Color(0xFFF59E0B);
-const Color _amberDark = Color(0xFFD97706);
-const Color _blueGray = Color(0xFF475569);
-
 ThemeData _constructionTheme(BuildContext context) {
   final base = Theme.of(context);
   final isDark = base.brightness == Brightness.dark;
   final baseScheme = base.colorScheme;
   final colorScheme = base.colorScheme.copyWith(
-    primary: _amber,
+    primary: AppColors.primary,
     onPrimary: AppColors.surface,
-    primaryContainer: _amber,
+    primaryContainer: AppColors.primary,
     onPrimaryContainer: AppColors.surface,
-    secondary: _blueGray,
+    secondary: AppColors.textSecondary,
     surface: isDark ? baseScheme.surface : AppColors.surface,
     onSurface: isDark ? baseScheme.onSurface : AppColors.textPrimary,
     onSurfaceVariant: isDark
         ? baseScheme.onSurfaceVariant
         : AppColors.textSecondary,
-    surfaceContainerHighest:
-        isDark ? baseScheme.surfaceContainerHighest : AppColors.surfaceMuted,
+    surfaceContainerHighest: isDark
+        ? baseScheme.surfaceContainerHighest
+        : AppColors.surfaceMuted,
     outline: isDark ? baseScheme.outline : AppColors.border,
   );
   final textTheme = AppTextStyles.theme(colorScheme);
 
   return base.copyWith(
     colorScheme: colorScheme,
-    scaffoldBackgroundColor:
-        isDark ? base.scaffoldBackgroundColor : AppColors.background,
+    scaffoldBackgroundColor: isDark
+        ? base.scaffoldBackgroundColor
+        : AppColors.background,
     textTheme: textTheme,
     appBarTheme: base.appBarTheme.copyWith(
-      backgroundColor:
-          isDark ? base.scaffoldBackgroundColor : AppColors.background,
+      backgroundColor: isDark
+          ? base.scaffoldBackgroundColor
+          : AppColors.background,
       foregroundColor: colorScheme.onSurface,
       titleTextStyle: textTheme.titleMedium,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: _amber,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.surface,
         minimumSize: const Size(64, 44),
         shape: RoundedRectangleBorder(
@@ -52,7 +51,7 @@ ThemeData _constructionTheme(BuildContext context) {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: _amberDark,
+        foregroundColor: AppColors.accentDark,
         side: BorderSide(color: colorScheme.outline),
         minimumSize: const Size(64, 44),
         shape: RoundedRectangleBorder(
@@ -63,15 +62,15 @@ ThemeData _constructionTheme(BuildContext context) {
     ),
     inputDecorationTheme: base.inputDecorationTheme.copyWith(
       fillColor: colorScheme.surface,
-      prefixIconColor: _amberDark,
+      prefixIconColor: AppColors.accentDark,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.large),
-        borderSide: const BorderSide(color: _amber, width: 1.4),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: colorScheme.surface,
-      indicatorColor: _amber,
+      indicatorColor: AppColors.primary,
       elevation: 6,
       shadowColor: AppColors.overlay,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -93,7 +92,7 @@ ThemeData _constructionTheme(BuildContext context) {
       }),
     ),
     progressIndicatorTheme: base.progressIndicatorTheme.copyWith(
-      color: _amber,
+      color: AppColors.primary,
       linearTrackColor: colorScheme.surfaceContainerHighest,
     ),
   );

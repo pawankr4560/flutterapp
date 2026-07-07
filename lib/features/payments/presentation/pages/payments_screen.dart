@@ -51,10 +51,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         payment: payment,
       );
       final uri = Uri.parse(session.checkoutUrl);
-      final opened = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,9 +60,9 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) {
@@ -97,7 +94,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                       const Expanded(
                         child: Text(
                           'Payment overview',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       IconButton(
@@ -174,8 +174,8 @@ class _PaymentsContent extends StatelessWidget {
           onPressed: !canPay
               ? null
               : isStartingPayment
-                  ? null
-                  : () => onPayNextEmi(nextDuePayment),
+              ? null
+              : () => onPayNextEmi(nextDuePayment),
         ),
       ],
     );
@@ -190,7 +190,9 @@ class _NextDuePaymentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dueDate = payment?.dueDate ?? payment?.date;
-    final dueLabel = dueDate == null ? 'No due date available' : 'Due ${_formatDate(dueDate)}';
+    final dueLabel = dueDate == null
+        ? 'No due date available'
+        : 'Due ${_formatDate(dueDate)}';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -208,7 +210,9 @@ class _NextDuePaymentCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            payment == null ? 'No pending payment' : _formatAmount(payment!.amount),
+            payment == null
+                ? 'No pending payment'
+                : _formatAmount(payment!.amount),
             style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -243,12 +247,14 @@ class _PaymentCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: payment.isCompleted ? _successSurface : AppColors.surfaceMuted,
+              color: payment.isCompleted
+                  ? AppColors.successSurface
+                  : AppColors.surfaceMuted,
               shape: BoxShape.circle,
             ),
             child: Icon(
               payment.isCompleted ? Icons.check : Icons.schedule,
-              color: payment.isCompleted ? _successGreen : AppColors.accent,
+              color: payment.isCompleted ? AppColors.success : AppColors.accent,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -258,7 +264,10 @@ class _PaymentCard extends StatelessWidget {
               children: [
                 Text(
                   payment.title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
@@ -290,13 +299,18 @@ class _PaymentCard extends StatelessWidget {
             children: [
               Text(
                 _formatAmount(payment.amount),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 payment.status.isEmpty ? 'Unknown' : payment.status,
                 style: TextStyle(
-                  color: payment.isCompleted ? _successGreen : AppColors.textSecondary,
+                  color: payment.isCompleted
+                      ? AppColors.success
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -324,7 +338,7 @@ class _PaymentsError extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Unable to load payments.',
@@ -403,8 +417,3 @@ String _monthName(int month) {
   ];
   return names[month - 1];
 }
-
-const Color _successGreen = Color(0xFF16A34A);
-const Color _successSurface = Color(0xFFEFFAF3);
-
-

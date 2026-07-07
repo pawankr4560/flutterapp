@@ -39,12 +39,12 @@ class LoanOfferCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
+                  color: AppColors.surface.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.local_offer_outlined,
-                  color: Colors.white,
+                  color: AppColors.surface,
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -52,7 +52,7 @@ class LoanOfferCard extends StatelessWidget {
                 child: Text(
                   'Pre-approved loan offer',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -64,7 +64,7 @@ class LoanOfferCard extends StatelessWidget {
           Text(
             amountLabel,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.surface,
               fontSize: 30,
               fontWeight: FontWeight.w800,
               height: 1.1,
@@ -74,7 +74,7 @@ class LoanOfferCard extends StatelessWidget {
           Text(
             interestRateLabel,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.86),
+              color: AppColors.surface.withValues(alpha: 0.86),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -85,7 +85,7 @@ class LoanOfferCard extends StatelessWidget {
             child: FilledButton(
               onPressed: onApply,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 foregroundColor: AppColors.accent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -100,5 +100,3 @@ class LoanOfferCard extends StatelessWidget {
     );
   }
 }
-
-

@@ -52,7 +52,9 @@ class _MaterialCard extends StatelessWidget {
                 child: Text(
                   product.priceText,
                   style: AppTextStyles.titleMedium(context).copyWith(
-                    color: product.rate == null ? _blueGray : _amberDark,
+                    color: product.rate == null
+                        ? AppColors.textSecondary
+                        : AppColors.accentDark,
                   ),
                 ),
               ),
@@ -69,4 +71,3 @@ class _MaterialCard extends StatelessWidget {
     );
   }
 }
-

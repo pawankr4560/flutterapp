@@ -14,7 +14,7 @@ class _SalesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: onAdd,
         icon: const Icon(Icons.add_rounded),
@@ -62,5 +62,3 @@ class _SalesView extends StatelessWidget {
     );
   }
 }
-
-

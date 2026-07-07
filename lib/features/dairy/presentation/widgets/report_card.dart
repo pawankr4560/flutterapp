@@ -33,12 +33,11 @@ class _ReportCard extends StatelessWidget {
             value: progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            backgroundColor: _teal.withValues(alpha: 0.1),
-            color: _teal,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            color: AppColors.primary,
           ),
         ],
       ),
     );
   }
 }
-
