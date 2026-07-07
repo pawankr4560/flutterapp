@@ -9,6 +9,7 @@ import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
+import 'package:finhub/core/widgets/animated_auth_background.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
 import 'package:finhub/features/auth/application/services/auth_service.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
@@ -41,19 +42,21 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: _LoginCard(content: _formContent()),
+      body: AnimatedAuthBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: _LoginCard(content: _formContent()),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

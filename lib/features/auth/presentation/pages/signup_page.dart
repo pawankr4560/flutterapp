@@ -9,6 +9,7 @@ import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
+import 'package:finhub/core/widgets/animated_auth_background.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
 import 'package:finhub/features/auth/application/services/auth_service.dart';
 import 'package:finhub/features/auth/application/services/auth_session.dart';
@@ -51,126 +52,128 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: _SignupCard(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _BrandHeader(),
-                      const SizedBox(height: AppSpacing.lg),
-                      _AuthTabSwitch(
-                        onLogin: _isLoading
-                            ? null
-                            : () => context.go(AppRoutes.login),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        'Create account to manage your services.',
-                        style: AppTextStyles.bodyMedium(
-                          context,
-                        ).copyWith(color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppTextField(
-                              controller: _firstName,
-                              label: 'First Name',
-                              prefixIcon: Icons.person_outline_rounded,
-                              validator: _required,
+      body: AnimatedAuthBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: _SignupCard(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const _BrandHeader(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _AuthTabSwitch(
+                          onLogin: _isLoading
+                              ? null
+                              : () => context.go(AppRoutes.login),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'Create account to manage your services.',
+                          style: AppTextStyles.bodyMedium(
+                            context,
+                          ).copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AppTextField(
+                                controller: _firstName,
+                                label: 'First Name',
+                                prefixIcon: Icons.person_outline_rounded,
+                                validator: _required,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: AppTextField(
-                              controller: _lastName,
-                              label: 'Last Name',
-                              validator: _required,
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: AppTextField(
+                                controller: _lastName,
+                                label: 'Last Name',
+                                validator: _required,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _email,
-                        label: 'Email',
-                        hintText: 'Enter your email',
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.mail_outline_rounded,
-                        validator: _validateEmail,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _phone,
-                        label: 'Phone',
-                        hintText: 'Enter your phone number',
-                        keyboardType: TextInputType.phone,
-                        prefixIcon: Icons.phone_outlined,
-                        validator: _required,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _GenderDropdown(
-                        value: _gender,
-                        onChanged: (value) => setState(() => _gender = value),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _address,
-                        label: 'Address',
-                        hintText: 'Enter your address',
-                        prefixIcon: Icons.home_outlined,
-                        maxLines: 2,
-                        validator: _required,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _password,
-                        label: 'Password',
-                        hintText: 'Create a password',
-                        prefixIcon: Icons.lock_outline_rounded,
-                        obscureText: true,
-                        validator: _validatePassword,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      AppTextField(
-                        controller: _confirmPassword,
-                        label: 'Confirm Password',
-                        hintText: 'Confirm your password',
-                        prefixIcon: Icons.lock_reset_rounded,
-                        obscureText: true,
-                        validator: _validateConfirmPassword,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      PrimaryButton(
-                        text: 'Create account',
-                        loading: _isLoading,
-                        onPressed: _submit,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Already have an account?',
-                            style: AppTextStyles.bodyMedium(context),
-                          ),
-                          TextButton(
-                            onPressed: _isLoading
-                                ? null
-                                : () => context.go(AppRoutes.login),
-                            child: const Text('Log in'),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _email,
+                          label: 'Email',
+                          hintText: 'Enter your email',
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: Icons.mail_outline_rounded,
+                          validator: _validateEmail,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _phone,
+                          label: 'Phone',
+                          hintText: 'Enter your phone number',
+                          keyboardType: TextInputType.phone,
+                          prefixIcon: Icons.phone_outlined,
+                          validator: _required,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _GenderDropdown(
+                          value: _gender,
+                          onChanged: (value) => setState(() => _gender = value),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _address,
+                          label: 'Address',
+                          hintText: 'Enter your address',
+                          prefixIcon: Icons.home_outlined,
+                          maxLines: 2,
+                          validator: _required,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _password,
+                          label: 'Password',
+                          hintText: 'Create a password',
+                          prefixIcon: Icons.lock_outline_rounded,
+                          obscureText: true,
+                          validator: _validatePassword,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        AppTextField(
+                          controller: _confirmPassword,
+                          label: 'Confirm Password',
+                          hintText: 'Confirm your password',
+                          prefixIcon: Icons.lock_reset_rounded,
+                          obscureText: true,
+                          validator: _validateConfirmPassword,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        PrimaryButton(
+                          text: 'Create account',
+                          loading: _isLoading,
+                          onPressed: _submit,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account?',
+                              style: AppTextStyles.bodyMedium(context),
+                            ),
+                            TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => context.go(AppRoutes.login),
+                              child: const Text('Log in'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
