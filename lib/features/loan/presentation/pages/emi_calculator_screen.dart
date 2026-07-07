@@ -98,7 +98,7 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: 'Apply for this loan',
-              onPressed: () => context.push(AppRoutePaths.apply),
+              onPressed: () => context.push(AppRoutes.apply),
             ),
           ],
         ),
@@ -302,5 +302,6 @@ String _formatCurrency(double value) {
 
   return 'Rs. ${groups.join(',')},$lastThree';
 }
+
 
 

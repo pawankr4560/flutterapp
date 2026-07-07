@@ -44,23 +44,6 @@ class AppRoutes {
   static const String status = '/status';
 }
 
-/// Legacy route paths still used by migrated feature screens.
-class AppRoutePaths {
-  const AppRoutePaths._();
-
-  static const String login = AppRoutes.login;
-  static const String signup = AppRoutes.signup;
-  static const String home = AppRoutes.dashboard;
-  static const String loans = AppRoutes.loans;
-  static const String payments = AppRoutes.payments;
-  static const String profile = AppRoutes.profile;
-  static const String calculator = AppRoutes.calculator;
-  static const String apply = AppRoutes.apply;
-  static const String documents = AppRoutes.documents;
-  static const String uploadedDocuments = AppRoutes.uploadedDocuments;
-  static const String status = AppRoutes.status;
-}
-
 /// GoRouter configuration for the initial FinHub navigation graph.
 final GoRouter appRouter = GoRouter(
   initialLocation: AppRoutes.splash,
@@ -190,3 +173,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+

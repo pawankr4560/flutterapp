@@ -44,24 +44,12 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 900;
-
             return Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 980 : 460),
-                  child: isWide
-                      ? Row(
-                          children: [
-                            const Expanded(child: _BrandPanel()),
-                            const SizedBox(width: AppSpacing.xl),
-                            Expanded(
-                              child: _LoginCard(content: _formContent()),
-                            ),
-                          ],
-                        )
-                      : _LoginCard(content: _formContent()),
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: _LoginCard(content: _formContent()),
                 ),
               ),
             );
@@ -77,22 +65,19 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _LogoMark(),
+          const _BrandHeader(),
+          const SizedBox(height: AppSpacing.lg),
+          _AuthTabSwitch(
+            onSignup: _isLoading ? null : () => context.push(AppRoutes.signup),
+          ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'Welcome back',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.headlineLarge(context),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Sign in to manage your Services.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyLarge(
+            'Sign in to manage your services.',
+            style: AppTextStyles.bodyMedium(
               context,
             ).copyWith(color: AppColors.textSecondary),
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.md),
           AppTextField(
             controller: _emailController,
             labelText: 'Email',
@@ -120,7 +105,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
@@ -128,14 +112,13 @@ class _LoginPageState extends State<LoginPage> {
               child: const Text('Forgot password?'),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           PrimaryButton(
-            text: 'Login',
-            icon: Icons.login_rounded,
+            text: 'Log in',
             loading: _isLoading,
             onPressed: _submit,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.xl),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -230,16 +213,16 @@ class _LoginCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.overlay,
-            blurRadius: AppSpacing.xl,
-            offset: Offset(0, AppSpacing.sm),
+            color: Color(0x0A000000),
+            blurRadius: AppSpacing.md,
+            offset: Offset(0, AppSpacing.xs),
           ),
         ],
       ),
@@ -248,42 +231,70 @@ class _LoginCard extends StatelessWidget {
   }
 }
 
-class _BrandPanel extends StatelessWidget {
-  const _BrandPanel();
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const _LogoMark(),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          'SmartSathi',
+          style: AppTextStyles.titleMedium(
+            context,
+          ).copyWith(fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+}
+
+class _AuthTabSwitch extends StatelessWidget {
+  const _AuthTabSwitch({required this.onSignup});
+
+  final VoidCallback? onSignup;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      height: 40,
+      padding: const EdgeInsets.all(AppSpacing.xxs),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          const _LogoMark(isLight: true),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'SmartSathi',
-            style: AppTextStyles.displayMedium(
-              context,
-            ).copyWith(color: AppColors.surface),
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+              ),
+              child: Center(
+                child: Text(
+                  'Log in',
+                  style: AppTextStyles.labelLarge(
+                    context,
+                  ).copyWith(color: AppColors.textPrimary),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'One App. Multiple Businesses.',
-            style: AppTextStyles.titleMedium(
-              context,
-            ).copyWith(color: AppColors.surface),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            'Manage loans, inventory, dairy, vehicles, plots, reports, and alerts from one secure workspace.',
-            style: AppTextStyles.bodyLarge(
-              context,
-            ).copyWith(color: AppColors.surface),
+          Expanded(
+            child: TextButton(
+              onPressed: onSignup,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                textStyle: AppTextStyles.labelLarge(context),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                ),
+              ),
+              child: const Text('Sign up'),
+            ),
           ),
         ],
       ),
@@ -292,26 +303,21 @@ class _BrandPanel extends StatelessWidget {
 }
 
 class _LogoMark extends StatelessWidget {
-  const _LogoMark({this.isLight = false});
-
-  final bool isLight;
+  const _LogoMark();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: AppSpacing.xxl,
-        height: AppSpacing.xxl,
-        decoration: BoxDecoration(
-          color: isLight
-              ? AppColors.surface.withValues(alpha: 0.16)
-              : AppColors.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppRadius.large),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          child: Image.asset('assets/images/app_logo.png', fit: BoxFit.cover),
-        ),
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+      ),
+      child: const Icon(
+        Icons.account_balance_rounded,
+        color: AppColors.surface,
+        size: 20,
       ),
     );
   }

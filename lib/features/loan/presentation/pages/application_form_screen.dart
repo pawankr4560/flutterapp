@@ -127,7 +127,7 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
         );
         context.push(
           Uri(
-            path: AppRoutePaths.documents,
+            path: AppRoutes.documents,
             queryParameters: {'applicationId': applicationId},
           ).toString(),
         );
@@ -261,5 +261,6 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
     );
   }
 }
+
 
 

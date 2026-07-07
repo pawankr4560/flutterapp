@@ -59,14 +59,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             body: SafeArea(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
                   AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.xl,
                 ),
                 children: [
                   Text('Profile', style: AppTextStyles.headlineLarge(context)),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.md),
                   _ProfileHeaderCard(
                     name: _displayName,
                     email: _displayEmail,
@@ -74,14 +74,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isUploading: _isUploadingProfileImage,
                     onCameraTap: _uploadProfilePicture,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
                   _SectionHeader(
                     title: 'Personal details',
                     actionLabel: 'Edit',
                     actionIcon: Icons.edit_outlined,
                     onAction: _showEditProfileSheet,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _ProfileDetailsPanel(
                     rows: [
                       _DetailRowData(
@@ -106,24 +106,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
                   const _SectionHeader(title: 'Loan actions'),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _ActionCard(
                     icon: Icons.account_balance_wallet_outlined,
                     title: 'My loans',
                     subtitle:
                         'View applications and upload documents from status',
-                    onTap: () => context.push(AppRoutePaths.loans),
+                    onTap: () => context.push(AppRoutes.loans),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _ActionCard(
                     icon: Icons.calculate_outlined,
                     title: 'EMI calculator',
                     subtitle: 'Estimate monthly repayments',
-                    onTap: () => context.push(AppRoutePaths.calculator),
+                    onTap: () => context.push(AppRoutes.calculator),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _ActionCard(
                     icon: Icons.upload_file_outlined,
                     title: 'Upload documents',
@@ -131,11 +131,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'Open this from a loan status page to attach an application ID',
                     onTap: _showUploadDocumentHint,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
                   const _SectionHeader(title: 'Account'),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   const _AccountPanel(),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
                   _LogoutButton(onTap: _logout),
                 ],
               ),
@@ -338,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _logout() async {
     await AuthSession.instance.logout();
     if (mounted) {
-      context.go(AppRoutePaths.login);
+      context.go(AppRoutes.login);
     }
   }
 
@@ -371,7 +371,7 @@ class _ProfileHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _CardSurface(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
           _Avatar(
@@ -380,7 +380,7 @@ class _ProfileHeaderCard extends StatelessWidget {
             isUploading: isUploading,
             onCameraTap: onCameraTap,
           ),
-          const SizedBox(width: AppSpacing.lg),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,11 +396,11 @@ class _ProfileHeaderCard extends StatelessWidget {
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyLarge(
-                    context,
-                  ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: AppTextStyles.bodyLarge(context).copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.xs),
                 const _SecureAccountBadge(),
               ],
             ),
@@ -429,13 +429,13 @@ class _Avatar extends StatelessWidget {
     final initial = name.trim().isEmpty ? 'F' : name.trim()[0].toUpperCase();
 
     return SizedBox(
-      height: 96,
-      width: 96,
+      height: 76,
+      width: 76,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           CircleAvatar(
-            radius: 56,
+            radius: 38,
             backgroundColor: AppColors.primary,
             backgroundImage: imageUrl.isEmpty ? null : NetworkImage(imageUrl),
             child: imageUrl.isEmpty
@@ -459,7 +459,7 @@ class _Avatar extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 onTap: isUploading ? null : onCameraTap,
                 child: SizedBox.square(
-                  dimension: 42,
+                  dimension: 34,
                   child: isUploading
                       ? const Padding(
                           padding: EdgeInsets.all(AppSpacing.sm),
@@ -468,7 +468,7 @@ class _Avatar extends StatelessWidget {
                       : const Icon(
                           Icons.photo_camera_outlined,
                           color: AppColors.primary,
-                          size: 22,
+                          size: 18,
                         ),
                 ),
               ),
@@ -533,16 +533,22 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: AppTextStyles.headlineMedium(context)),
+          child: Text(
+            title,
+            style: AppTextStyles.titleLarge(
+              context,
+            ).copyWith(fontSize: 24, height: 1.2),
+          ),
         ),
         if (actionLabel != null && onAction != null)
           TextButton.icon(
             onPressed: onAction,
-            icon: Icon(actionIcon, size: 22),
+            icon: Icon(actionIcon, size: 18),
             label: Text(actionLabel!),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
-              textStyle: AppTextStyles.titleMedium(context),
+              textStyle: AppTextStyles.labelLarge(context),
+              visualDensity: VisualDensity.compact,
             ),
           ),
       ],
@@ -564,10 +570,7 @@ class _ProfileDetailsPanel extends StatelessWidget {
           for (var index = 0; index < rows.length; index++) ...[
             _DetailRow(data: rows[index]),
             if (index != rows.length - 1)
-              Divider(
-                height: 1,
-                color: Theme.of(context).colorScheme.outline,
-              ),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outline),
           ],
         ],
       ),
@@ -595,24 +598,39 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(data.icon, color: AppColors.primary, size: 30),
-          const SizedBox(width: AppSpacing.lg),
+          Icon(data.icon, color: AppColors.primary, size: 24),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   data.label,
-                  style: AppTextStyles.bodyLarge(
-                    context,
-                  ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMedium(context).copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(data.value, style: AppTextStyles.titleLarge(context)),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  data.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.titleMedium(context).copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
               ],
             ),
           ),
@@ -641,31 +659,46 @@ class _ActionCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primary, size: 30),
-            const SizedBox(width: AppSpacing.lg),
+            Icon(icon, color: AppColors.primary, size: 24),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.titleLarge(context)),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.titleMedium(context).copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     subtitle,
-                    style: AppTextStyles.bodyLarge(
-                      context,
-                    ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.bodyMedium(context).copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: AppSpacing.sm),
             Icon(
               Icons.chevron_right_rounded,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              size: 32,
+              size: 28,
             ),
           ],
         ),
@@ -689,7 +722,7 @@ class _AccountPanel extends StatelessWidget {
             value: 'Active',
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Divider(
               height: 1,
               color: Theme.of(context).colorScheme.outline,
@@ -720,21 +753,34 @@ class _AccountRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 30),
-          const SizedBox(width: AppSpacing.lg),
+          Icon(icon, color: AppColors.primary, size: 24),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(title, style: AppTextStyles.titleLarge(context)),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.titleMedium(
+                context,
+              ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
           ),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: AppTextStyles.bodyLarge(
-                context,
-              ).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodyMedium(context).copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -754,7 +800,7 @@ class _LogoutButton extends StatelessWidget {
       padding: EdgeInsets.zero,
       onTap: onTap,
       child: SizedBox(
-        height: 64,
+        height: 52,
         child: Center(
           child: Text(
             'Logout',

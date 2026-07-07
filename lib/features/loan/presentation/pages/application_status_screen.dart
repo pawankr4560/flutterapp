@@ -107,7 +107,7 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                         label: 'Upload documents',
                         onPressed: () => context.push(
                           Uri(
-                            path: AppRoutePaths.documents,
+                            path: AppRoutes.documents,
                             queryParameters: {'applicationId': status.id},
                           ).toString(),
                         ),
@@ -119,7 +119,7 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                         label: 'View documents',
                         onPressed: () => context.push(
                           Uri(
-                            path: AppRoutePaths.uploadedDocuments,
+                            path: AppRoutes.uploadedDocuments,
                             queryParameters: {'applicationId': status.id},
                           ).toString(),
                         ),
@@ -131,7 +131,7 @@ class _ApplicationStatusScreenState extends State<ApplicationStatusScreen> {
                 const SizedBox(height: AppSpacing.md),
                 AppButton(
                   label: 'Go to dashboard',
-                  onPressed: () => context.go(AppRoutePaths.home),
+                  onPressed: () => context.go(AppRoutes.dashboard),
                   variant: AppButtonVariant.secondary,
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -341,5 +341,6 @@ enum _TimelineStatus {
 }
 
 const Color _successGreen = Color(0xFF16A34A);
+
 
 

@@ -57,7 +57,7 @@ class _LoansScreenState extends State<LoansScreen> {
   void _openStatus(String applicationId) {
     context.push(
       Uri(
-        path: AppRoutePaths.status,
+        path: AppRoutes.status,
         queryParameters: {'applicationId': applicationId},
       ).toString(),
     );
@@ -92,7 +92,7 @@ class _LoansScreenState extends State<LoansScreen> {
                       child: LoanOfferCard(
                         amountLabel: offer.amountLabel,
                         interestRateLabel: offer.interestRateLabel,
-                        onApply: () => context.push(AppRoutePaths.apply),
+                        onApply: () => context.push(AppRoutes.apply),
                       ),
                     ),
                   ),
@@ -269,7 +269,7 @@ class _NoApplications extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: 'Apply now',
-            onPressed: () => context.push(AppRoutePaths.apply),
+            onPressed: () => context.push(AppRoutes.apply),
           ),
         ],
       ),
@@ -288,5 +288,6 @@ class _LoanOffer {
   final String amountLabel;
   final String interestRateLabel;
 }
+
 
 

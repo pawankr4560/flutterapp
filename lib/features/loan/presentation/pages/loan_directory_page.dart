@@ -65,7 +65,7 @@ class LoanDirectoryPage extends ConsumerWidget {
   }
 
   void _openAddLoan(BuildContext context) {
-    context.push(AppRoutePaths.apply);
+    context.push(AppRoutes.apply);
   }
 
   void _openLoanDetail(BuildContext context, LoanCustomer customer) {
@@ -121,3 +121,4 @@ class _PortfolioBanner extends StatelessWidget {
 
   String _formatCurrency(double value) => '₹${value.toStringAsFixed(0)}';
 }
+

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
+import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
@@ -55,15 +56,19 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              _FieldLabel(label: 'Farmer'),
+              AppFieldLabel(label: 'Farmer'),
               const SizedBox(height: AppSpacing.xs),
-              _FarmerDropdown(
+              AppDropdownField<String>(
+                label: null,
                 value: _farmerName!,
-                farmers: farmers,
+                items: farmers,
+                decoration: AppFormDecorations.filled(),
+                style: AppTextStyles.bodyLarge(context),
+                bottomSpacing: 0,
                 onChanged: (value) => setState(() => _farmerName = value),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _FieldLabel(label: 'Shift'),
+              AppFieldLabel(label: 'Shift'),
               const SizedBox(height: AppSpacing.xs),
               _ShiftSelector(
                 selectedShift: _shift,
@@ -90,7 +95,7 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
                 onChanged: (value) => setState(() => _fat = value),
               ),
               const SizedBox(height: AppSpacing.md),
-              _FieldLabel(label: 'Rate per litre (Rs.)'),
+              AppFieldLabel(label: 'Rate per litre (Rs.)'),
               const SizedBox(height: AppSpacing.xs),
               AppTextField(
                 controller: _rateController,
@@ -137,64 +142,6 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
   String? _positiveNumber(String? value) {
     final number = double.tryParse(value ?? '');
     return number == null || number <= 0 ? 'Enter a valid value' : null;
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: AppTextStyles.bodyLarge(context).copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _FarmerDropdown extends StatelessWidget {
-  const _FarmerDropdown({
-    required this.value,
-    required this.farmers,
-    required this.onChanged,
-  });
-
-  final String value;
-  final List<String> farmers;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.surface,
-        border: _border(AppColors.border),
-        enabledBorder: _border(AppColors.border),
-        focusedBorder: _border(AppColors.primary),
-      ),
-      style: AppTextStyles.bodyLarge(context),
-      items: [
-        for (final farmer in farmers)
-          DropdownMenuItem(value: farmer, child: Text(farmer)),
-      ],
-      onChanged: (value) {
-        if (value != null) onChanged(value);
-      },
-    );
-  }
-
-  OutlineInputBorder _border(Color color) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.large),
-      borderSide: BorderSide(color: color),
-    );
   }
 }
 
@@ -259,7 +206,7 @@ class _ValueSlider extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _FieldLabel(label: label)),
+            Expanded(child: AppFieldLabel(label: label)),
             Text(valueText, style: AppTextStyles.titleMedium(context)),
           ],
         ),
@@ -309,3 +256,4 @@ class _PayableBanner extends StatelessWidget {
     );
   }
 }
+

@@ -208,7 +208,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         );
         context.push(
           Uri(
-            path: AppRoutePaths.status,
+            path: AppRoutes.status,
             queryParameters: {'applicationId': applicationId},
           ).toString(),
         );
@@ -498,6 +498,7 @@ class _DashedBorderPainter extends CustomPainter {
 
 const Color _successGreen = Color(0xFF16A34A);
 const Color _successSurface = Color(0xFFEFFAF3);
+
 
 
 

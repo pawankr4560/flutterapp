@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
+import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
 import 'package:finhub/features/car_booking/domain/entities/car_booking.dart';
-import 'package:finhub/features/car_booking/domain/entities/vehicle.dart';
 import 'package:finhub/features/car_booking/presentation/providers/car_booking_provider.dart';
 
 /// Form page for creating a new car rental booking.
@@ -55,7 +55,7 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              _FieldLabel(label: 'Customer name'),
+              AppFieldLabel(label: 'Customer name'),
               const SizedBox(height: AppSpacing.xs),
               AppTextField(
                 controller: _customerController,
@@ -63,26 +63,40 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
                 validator: _required,
               ),
               const SizedBox(height: AppSpacing.lg),
-              _FieldLabel(label: 'Vehicle'),
+              AppFieldLabel(label: 'Vehicle'),
               const SizedBox(height: AppSpacing.xs),
-              _VehicleDropdown(
+              AppDropdownField<String>(
+                label: null,
                 value: _vehicleId,
-                vehicles: availableVehicles,
+                items: availableVehicles.map((vehicle) => vehicle.id).toList(),
+                itemLabel: (id) {
+                  final vehicle = availableVehicles.firstWhere(
+                    (vehicle) => vehicle.id == id,
+                  );
+                  return '${vehicle.model} - ${vehicle.registrationNumber} - '
+                      'Rs. ${vehicle.dailyRate.toStringAsFixed(0)}/day';
+                },
+                decoration: AppFormDecorations.filled(),
+                style: AppTextStyles.bodyLarge(context),
+                hint: const Text('No available vehicles'),
+                bottomSpacing: 0,
                 onChanged: (value) => setState(() => _vehicleId = value),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _FieldLabel(label: 'Pickup date'),
+              AppFieldLabel(label: 'Pickup date'),
               const SizedBox(height: AppSpacing.xs),
-              _DatePickerTile(
+              AppDateDisplayTile(
                 date: _pickupDate,
                 onTap: () => _pickDate(isPickup: true),
+                formatDate: _formatDate,
               ),
               const SizedBox(height: AppSpacing.lg),
-              _FieldLabel(label: 'Return date'),
+              AppFieldLabel(label: 'Return date'),
               const SizedBox(height: AppSpacing.xs),
-              _DatePickerTile(
+              AppDateDisplayTile(
                 date: _returnDate,
                 onTap: () => _pickDate(isPickup: false),
+                formatDate: _formatDate,
               ),
               const SizedBox(height: AppSpacing.lg),
               _AmountBanner(days: days, amount: amount),
@@ -172,84 +186,6 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: AppTextStyles.bodyLarge(context).copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _VehicleDropdown extends StatelessWidget {
-  const _VehicleDropdown({
-    required this.value,
-    required this.vehicles,
-    required this.onChanged,
-  });
-
-  final String? value;
-  final List<Vehicle> vehicles;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: _inputDecoration(),
-      style: AppTextStyles.bodyLarge(context),
-      hint: const Text('No available vehicles'),
-      items: [
-        for (final vehicle in vehicles)
-          DropdownMenuItem(
-            value: vehicle.id,
-            child: Text(
-              '${vehicle.model} - ${vehicle.registrationNumber} - '
-              'Rs. ${vehicle.dailyRate.toStringAsFixed(0)}/day',
-            ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value != null) onChanged(value);
-      },
-    );
-  }
-}
-
-class _DatePickerTile extends StatelessWidget {
-  const _DatePickerTile({required this.date, required this.onTap});
-
-  final DateTime? date;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.large),
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: _inputDecoration(
-          suffixIcon: const Icon(Icons.calendar_month_rounded),
-        ),
-        child: Text(
-          date == null ? 'dd-mm-yyyy' : _formatDate(date!),
-          style: AppTextStyles.bodyLarge(context).copyWith(
-            color: date == null ? AppColors.textSecondary : AppColors.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _AmountBanner extends StatelessWidget {
   const _AmountBanner({required this.days, required this.amount});
 
@@ -286,26 +222,9 @@ class _AmountBanner extends StatelessWidget {
   }
 }
 
-InputDecoration _inputDecoration({Widget? suffixIcon}) {
-  return InputDecoration(
-    filled: true,
-    fillColor: AppColors.surface,
-    suffixIcon: suffixIcon,
-    border: _border(AppColors.border),
-    enabledBorder: _border(AppColors.border),
-    focusedBorder: _border(AppColors.primary),
-  );
-}
-
-OutlineInputBorder _border(Color color) {
-  return OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadius.large),
-    borderSide: BorderSide(color: color),
-  );
-}
-
 String _formatDate(DateTime date) {
   final day = date.day.toString().padLeft(2, '0');
   final month = date.month.toString().padLeft(2, '0');
   return '$day-$month-${date.year}';
 }
+

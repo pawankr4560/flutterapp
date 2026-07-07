@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
-import 'package:finhub/core/widgets/app_radius.dart';
+import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
 import 'package:finhub/features/inventory/domain/entities/inventory_item.dart';
 import 'package:finhub/features/inventory/presentation/providers/inventory_provider.dart';
+
+const List<String> _inventoryCategories = [
+  'Raw materials',
+  'Plumbing',
+  'Finishing',
+  'Electrical',
+  'Tools',
+];
 
 /// Form page for adding a new product to inventory.
 class AddProductPage extends ConsumerStatefulWidget {
@@ -43,7 +50,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              _FieldLabel(label: 'Product name'),
+              AppFieldLabel(label: 'Product name'),
               const SizedBox(height: AppSpacing.xs),
               AppTextField(
                 controller: _nameController,
@@ -51,10 +58,15 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
                 validator: _required,
               ),
               const SizedBox(height: AppSpacing.lg),
-              _FieldLabel(label: 'Category'),
+              AppFieldLabel(label: 'Category'),
               const SizedBox(height: AppSpacing.xs),
-              _CategoryDropdown(
+              AppDropdownField<String>(
+                label: null,
                 value: _category,
+                items: _inventoryCategories,
+                decoration: AppFormDecorations.filled(),
+                style: AppTextStyles.bodyLarge(context),
+                bottomSpacing: 0,
                 onChanged: (value) => setState(() => _category = value),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -78,7 +90,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
                 onChanged: (value) => setState(() => _threshold = value),
               ),
               const SizedBox(height: AppSpacing.md),
-              _FieldLabel(label: 'Unit price (Rs.)'),
+              AppFieldLabel(label: 'Unit price (Rs.)'),
               const SizedBox(height: AppSpacing.xs),
               AppTextField(
                 controller: _unitPriceController,
@@ -128,54 +140,6 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: AppTextStyles.bodyLarge(context).copyWith(
-        color: AppColors.textSecondary,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _CategoryDropdown extends StatelessWidget {
-  const _CategoryDropdown({required this.value, required this.onChanged});
-
-  final String value;
-  final ValueChanged<String> onChanged;
-
-  static const List<String> _categories = [
-    'Raw materials',
-    'Plumbing',
-    'Finishing',
-    'Electrical',
-    'Tools',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: _inputDecoration(),
-      style: AppTextStyles.bodyLarge(context),
-      items: [
-        for (final category in _categories)
-          DropdownMenuItem(value: category, child: Text(category)),
-      ],
-      onChanged: (value) {
-        if (value != null) onChanged(value);
-      },
-    );
-  }
-}
-
 class _ValueSlider extends StatelessWidget {
   const _ValueSlider({
     required this.label,
@@ -201,7 +165,7 @@ class _ValueSlider extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _FieldLabel(label: label)),
+            Expanded(child: AppFieldLabel(label: label)),
             Text(valueText, style: AppTextStyles.titleMedium(context)),
           ],
         ),
@@ -217,19 +181,4 @@ class _ValueSlider extends StatelessWidget {
   }
 }
 
-InputDecoration _inputDecoration() {
-  return InputDecoration(
-    filled: true,
-    fillColor: AppColors.surface,
-    border: _border(AppColors.border),
-    enabledBorder: _border(AppColors.border),
-    focusedBorder: _border(AppColors.primary),
-  );
-}
 
-OutlineInputBorder _border(Color color) {
-  return OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadius.large),
-    borderSide: BorderSide(color: color),
-  );
-}
