@@ -1,41 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
+import 'package:finhub/core/widgets/error_view.dart';
+import 'package:finhub/core/widgets/loading_indicator.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
+import 'package:finhub/features/agriculture/application/services/agriculture_service.dart';
 import 'package:finhub/features/agriculture/domain/entities/field_record.dart';
-import 'package:finhub/features/agriculture/presentation/providers/agriculture_provider.dart';
-
-const List<String> _sprayProducts = [
-  'Chlorpyrifos 20% EC - 200 ml/acre',
-  'Urea granules - 25 kg/acre',
-  'Neem oil concentrate - 1 L/acre',
-  'DAP fertilizer - 50 kg/acre',
-];
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 /// Form for logging pesticide or fertilizer spray application.
-class LogSprayPage extends ConsumerStatefulWidget {
-  const LogSprayPage({super.key});
+class LogSprayPage extends StatefulWidget {
+  const LogSprayPage({super.key, required this.fields});
+
+  final List<FieldRecord> fields;
 
   @override
-  ConsumerState<LogSprayPage> createState() => _LogSprayPageState();
+  State<LogSprayPage> createState() => _LogSprayPageState();
 }
 
-class _LogSprayPageState extends ConsumerState<LogSprayPage> {
+class _LogSprayPageState extends State<LogSprayPage> {
+  final _service = AgricultureService();
   String? _fieldId;
-  String _product = 'Chlorpyrifos 20% EC - 200 ml/acre';
+  String? _productId;
   DateTime? _applicationDate;
+  var _loading = true;
+  var _saving = false;
+  String? _errorMessage;
+  List<SprayProduct> _products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fieldId = widget.fields.isEmpty ? null : widget.fields.first.id;
+    _loadSprayProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fields = ref.watch(agricultureProvider).fields;
-    _fieldId ??= fields.first.id;
-    final selectedField = fields.firstWhere((field) => field.id == _fieldId);
-    final dosageMl = selectedField.areaAcres * 200;
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Log spray application')),
+        body: const SafeArea(
+          child: LoadingIndicator(text: 'Loading spray products...'),
+        ),
+      );
+    }
+
+    final errorMessage = _errorMessage;
+    if (errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Log spray application')),
+        body: SafeArea(
+          child: ErrorView(
+            title: 'Unable to load spray products',
+            message: errorMessage,
+            retryButtonText: 'Retry',
+            onRetry: _loadSprayProducts,
+          ),
+        ),
+      );
+    }
+
+    if (widget.fields.isEmpty || _products.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Log spray application')),
+        body: const SafeArea(
+          child: Center(child: Text('No fields or spray products available.')),
+        ),
+      );
+    }
+
+    final fields = widget.fields;
+    final selectedField = fields.firstWhere(
+      (field) => field.id == _fieldId,
+      orElse: () => fields.first,
+    );
+    final selectedProduct = _products.firstWhere(
+      (product) => product.id == _productId,
+      orElse: () => _products.first,
+    );
+    final dosage = selectedField.areaAcres * selectedProduct.dosagePerAcre;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Log spray application')),
@@ -63,12 +111,16 @@ class _LogSprayPageState extends ConsumerState<LogSprayPage> {
             const SizedBox(height: AppSpacing.xs),
             AppDropdownField<String>(
               label: null,
-              value: _product,
-              items: _sprayProducts,
+              value: selectedProduct.id,
+              items: _products.map((product) => product.id).toList(),
+              itemLabel: (id) {
+                final product = _products.firstWhere((item) => item.id == id);
+                return product.displayLabel;
+              },
               decoration: AppFormDecorations.filled(),
               style: AppTextStyles.bodyLarge(context),
               bottomSpacing: 0,
-              onChanged: (value) => setState(() => _product = value),
+              onChanged: (value) => setState(() => _productId = value),
             ),
             const SizedBox(height: AppSpacing.lg),
             AppFieldLabel(label: 'Application date'),
@@ -81,13 +133,14 @@ class _LogSprayPageState extends ConsumerState<LogSprayPage> {
             const SizedBox(height: AppSpacing.lg),
             _DosageCard(
               field: selectedField,
-              product: _product,
-              dosageMl: dosageMl,
+              product: selectedProduct,
+              dosage: dosage,
             ),
             const SizedBox(height: AppSpacing.lg),
             PrimaryButton(
               text: 'Save spray log',
               icon: Icons.check_rounded,
+              loading: _saving,
               onPressed: _saveLog,
             ),
           ],
@@ -110,7 +163,7 @@ class _LogSprayPageState extends ConsumerState<LogSprayPage> {
     }
   }
 
-  void _saveLog() {
+  Future<void> _saveLog() async {
     final date = _applicationDate;
     if (date == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,11 +172,56 @@ class _LogSprayPageState extends ConsumerState<LogSprayPage> {
       return;
     }
 
-    ref.read(agricultureProvider.notifier).logSpray(
-          fieldId: _fieldId!,
-          applicationDate: date,
-        );
-    Navigator.of(context).pop();
+    final field = widget.fields.firstWhere((field) => field.id == _fieldId);
+    final product = _products.firstWhere((product) => product.id == _productId);
+    setState(() => _saving = true);
+
+    try {
+      await _service.logSpray(
+        bearerToken: AuthSession.instance.bearerToken,
+        field: field,
+        product: product,
+        applicationDate: date,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+    }
+  }
+
+  Future<void> _loadSprayProducts() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final products = await _service.fetchSprayProducts(
+        AuthSession.instance.bearerToken,
+      );
+      if (!mounted) return;
+      setState(() {
+        _products = products;
+        _productId = products.isEmpty ? null : products.first.id;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorMessage = _friendlyError(error);
+      });
+    }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '');
+    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
   }
 }
 
@@ -131,12 +229,12 @@ class _DosageCard extends StatelessWidget {
   const _DosageCard({
     required this.field,
     required this.product,
-    required this.dosageMl,
+    required this.dosage,
   });
 
   final FieldRecord field;
-  final String product;
-  final double dosageMl;
+  final SprayProduct product;
+  final double dosage;
 
   @override
   Widget build(BuildContext context) {
@@ -163,14 +261,14 @@ class _DosageCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${field.areaAcres.toStringAsFixed(1)} acres x $product',
+                  '${field.areaAcres.toStringAsFixed(1)} acres x ${product.displayLabel}',
                   style: AppTextStyles.bodyMedium(context).copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Estimated dosage: ${dosageMl.toStringAsFixed(0)} ml',
+                  'Estimated dosage: ${dosage.toStringAsFixed(0)} ${product.dosageUnit}',
                   style: AppTextStyles.titleMedium(context),
                 ),
               ],

@@ -48,10 +48,13 @@ class _CustomersScreenState extends State<_CustomersScreen> {
               showFilter: false,
             ),
             const SizedBox(height: AppSpacing.md),
-            for (final customer in customers) ...[
-              _CustomerCard(customer: customer),
-              const SizedBox(height: AppSpacing.sm),
-            ],
+            if (customers.isEmpty)
+              const _DairyEmptyMessage(message: 'No customers found')
+            else
+              for (final customer in customers) ...[
+                _CustomerCard(customer: customer),
+                const SizedBox(height: AppSpacing.sm),
+              ],
           ],
         ),
       ),

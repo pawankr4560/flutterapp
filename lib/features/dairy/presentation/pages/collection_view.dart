@@ -3,11 +3,13 @@ part of 'milk_directory_page.dart';
 class _CollectionView extends StatelessWidget {
   const _CollectionView({
     required this.entries,
+    required this.summary,
     required this.onSearch,
     required this.onAdd,
   });
 
   final List<_CollectionEntry> entries;
+  final _CollectionSummary summary;
   final ValueChanged<String> onSearch;
   final VoidCallback onAdd;
 
@@ -28,20 +30,20 @@ class _CollectionView extends StatelessWidget {
           96,
         ),
         children: [
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: _DairySummaryCard(
                   title: 'Today Collection',
-                  value: '120 L',
+                  value: summary.todayCollection,
                   icon: Icons.water_drop_rounded,
                 ),
               ),
-              SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _DairySummaryCard(
                   title: 'Total Amount',
-                  value: 'Rs. 6,400',
+                  value: summary.totalAmount,
                   icon: Icons.payments_rounded,
                 ),
               ),
@@ -53,10 +55,13 @@ class _CollectionView extends StatelessWidget {
             onChanged: onSearch,
           ),
           const SizedBox(height: AppSpacing.md),
-          for (final entry in entries) ...[
-            _CollectionCard(entry: entry),
-            const SizedBox(height: AppSpacing.sm),
-          ],
+          if (entries.isEmpty)
+            const _DairyEmptyMessage(message: 'No collection records found')
+          else
+            for (final entry in entries) ...[
+              _CollectionCard(entry: entry),
+              const SizedBox(height: AppSpacing.sm),
+            ],
         ],
       ),
     );

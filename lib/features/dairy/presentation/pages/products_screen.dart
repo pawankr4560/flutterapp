@@ -27,6 +27,9 @@ class _ProductsScreenState extends State<_ProductsScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth > 520 ? 3 : 2;
+            if (widget.products.isEmpty) {
+              return const _DairyEmptyMessage(message: 'No products added yet');
+            }
             return GridView.builder(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,

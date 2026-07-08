@@ -2,6 +2,7 @@ part of 'milk_directory_page.dart';
 
 class _DairyHomeView extends StatelessWidget {
   const _DairyHomeView({
+    required this.dashboard,
     required this.products,
     required this.onOpenCollection,
     required this.onOpenSales,
@@ -9,6 +10,7 @@ class _DairyHomeView extends StatelessWidget {
     required this.onOpenProducts,
   });
 
+  final _DairyDashboardData dashboard;
   final List<_ProductEntry> products;
   final VoidCallback onOpenCollection;
   final VoidCallback onOpenSales;
@@ -30,25 +32,25 @@ class _DairyHomeView extends StatelessWidget {
               childAspectRatio: 1.42,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              children: const [
+              children: [
                 _DairySummaryCard(
                   title: 'Today Collection',
-                  value: '120 L',
+                  value: dashboard.todayCollection,
                   icon: Icons.water_drop_rounded,
                 ),
                 _DairySummaryCard(
                   title: 'Today Sales',
-                  value: 'Rs. 8,500',
+                  value: dashboard.todaySales,
                   icon: Icons.payments_rounded,
                 ),
                 _DairySummaryCard(
                   title: 'Pending Payment',
-                  value: 'Rs. 12,000',
+                  value: dashboard.pendingPayment,
                   icon: Icons.pending_actions_rounded,
                 ),
                 _DairySummaryCard(
                   title: 'Products',
-                  value: '15',
+                  value: dashboard.productsCount.toString(),
                   icon: Icons.inventory_2_rounded,
                 ),
               ],
@@ -96,41 +98,45 @@ class _DairyHomeView extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         const _DairySectionHeader(title: 'Products'),
         const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: 126,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (context, index) =>
-                _DairyProductMiniCard(product: products[index]),
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-            itemCount: products.length,
+        if (products.isEmpty)
+          const _DairyEmptyMessage(message: 'No products added yet')
+        else
+          SizedBox(
+            height: 126,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) =>
+                  _DairyProductMiniCard(product: products[index]),
+              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+              itemCount: products.length,
+            ),
           ),
-        ),
         const SizedBox(height: AppSpacing.lg),
         const _DairySectionHeader(title: 'Recent Activities'),
         const SizedBox(height: AppSpacing.sm),
-        const _DairyActivityTile(
-          icon: Icons.water_drop_rounded,
-          title: 'Milk collected',
-          subtitle: 'Rahul Sharma - 20 L',
-          time: '5 mins ago',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _DairyActivityTile(
-          icon: Icons.point_of_sale_rounded,
-          title: 'Sale completed',
-          subtitle: 'Paneer - Rs. 500',
-          time: '20 mins ago',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _DairyActivityTile(
-          icon: Icons.account_balance_wallet_rounded,
-          title: 'Payment received',
-          subtitle: 'Amit Kumar - Rs. 1,000',
-          time: '1 hour ago',
-        ),
+        if (dashboard.recentActivities.isEmpty)
+          const _DairyEmptyMessage(message: 'No recent activities yet')
+        else
+          for (final activity in dashboard.recentActivities) ...[
+            _DairyActivityTile(
+              icon: _activityIcon(activity.type),
+              title: activity.title,
+              subtitle: activity.subtitle,
+              time: activity.time,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
       ],
     );
   }
+}
+
+IconData _activityIcon(String type) {
+  return switch (type.toUpperCase()) {
+    'COLLECTION' => Icons.water_drop_rounded,
+    'SALE' => Icons.point_of_sale_rounded,
+    'PAYMENT' => Icons.account_balance_wallet_rounded,
+    _ => Icons.info_rounded,
+  };
 }
 

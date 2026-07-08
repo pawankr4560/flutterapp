@@ -32,3 +32,25 @@ class _ConstructionPanel extends StatelessWidget {
   }
 }
 
+class _EmptyConstructionMessage extends StatelessWidget {
+  const _EmptyConstructionMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodyMedium(context).copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

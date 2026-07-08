@@ -19,6 +19,12 @@ class _MaterialCategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return const _EmptyConstructionMessage(
+        message: 'No material categories available yet',
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
@@ -49,14 +55,19 @@ class _MaterialCategoriesScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         _SectionHeader(title: selectedCategory),
         const SizedBox(height: AppSpacing.sm),
-        for (final product in products) ...[
-          _MaterialCard(
-            product: product,
-            onQuote: () => onQuote(product),
-            onOrder: () => onOrder(product),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
+        if (products.isEmpty)
+          const _EmptyConstructionMessage(
+            message: 'No materials available in this category yet',
+          )
+        else
+          for (final product in products) ...[
+            _MaterialCard(
+              product: product,
+              onQuote: () => onQuote(product),
+              onOrder: () => onOrder(product),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
       ],
     );
   }

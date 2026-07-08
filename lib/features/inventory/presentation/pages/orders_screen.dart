@@ -7,6 +7,10 @@ class _OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (orders.isEmpty) {
+      return const _EmptyConstructionMessage(message: 'No orders found');
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
       itemBuilder: (context, index) => _OrderCard(order: orders[index]),

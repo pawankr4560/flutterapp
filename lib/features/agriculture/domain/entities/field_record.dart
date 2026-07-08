@@ -16,6 +16,18 @@ class FieldRecord {
   final String status;
   final DateTime lastSprayedDate;
 
+  factory FieldRecord.fromJson(Map<String, dynamic> json) {
+    return FieldRecord(
+      id: _asString(json['id']),
+      name: _asString(json['name']),
+      crop: _asString(json['crop']),
+      areaAcres: _asDouble(json['areaAcres']) ?? 0,
+      status: _asString(json['status'], fallback: 'Healthy'),
+      lastSprayedDate:
+          _asDate(json['lastSprayedDate']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
   bool get needsAttention => status.toLowerCase() == 'needs attention';
 
   FieldRecord copyWith({
@@ -35,4 +47,24 @@ class FieldRecord {
       lastSprayedDate: lastSprayedDate ?? this.lastSprayedDate,
     );
   }
+}
+
+String _asString(Object? value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  if (value is String) return value;
+  if (value is num || value is bool) return value.toString();
+  return fallback;
+}
+
+double? _asDouble(Object? value) {
+  if (value == null) return null;
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
+}
+
+DateTime? _asDate(Object? value) {
+  final string = _asString(value);
+  return string.isEmpty ? null : DateTime.tryParse(string);
 }

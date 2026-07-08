@@ -17,6 +17,7 @@ class _RequestQuoteScreen extends StatelessWidget {
     required this.onProductChanged,
     required this.onUnitChanged,
     required this.onDateChanged,
+    required this.submitting,
     required this.onSubmit,
   });
 
@@ -35,6 +36,7 @@ class _RequestQuoteScreen extends StatelessWidget {
   final ValueChanged<String> onProductChanged;
   final ValueChanged<String> onUnitChanged;
   final ValueChanged<DateTime> onDateChanged;
+  final bool submitting;
   final VoidCallback onSubmit;
 
   @override
@@ -42,9 +44,15 @@ class _RequestQuoteScreen extends StatelessWidget {
     final categoryProducts = products
         .where((product) => product.category == selectedCategory)
         .toList();
-    final selected = products.firstWhere((product) {
-      return product.name == selectedProduct;
-    });
+    if (products.isEmpty || categoryProducts.isEmpty) {
+      return const _EmptyConstructionMessage(
+        message: 'No materials are available for quote requests yet',
+      );
+    }
+    final selected = products.firstWhere(
+      (product) => product.name == selectedProduct,
+      orElse: () => categoryProducts.first,
+    );
     final quantity = double.tryParse(quantityController.text.trim()) ?? 0;
     final estimatedAmount = selected.rate == null
         ? null
@@ -128,9 +136,14 @@ class _RequestQuoteScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton.icon(
-            onPressed: onSubmit,
-            icon: const Icon(Icons.send_rounded),
-            label: const Text('Submit Request'),
+            onPressed: submitting ? null : onSubmit,
+            icon: submitting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send_rounded),
+            label: Text(submitting ? 'Submitting...' : 'Submit Request'),
           ),
         ],
       ),

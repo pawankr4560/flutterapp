@@ -3,11 +3,13 @@ part of 'milk_directory_page.dart';
 class _SalesView extends StatelessWidget {
   const _SalesView({
     required this.sales,
+    required this.summary,
     required this.onSearch,
     required this.onAdd,
   });
 
   final List<_SaleEntry> sales;
+  final _SalesSummary summary;
   final ValueChanged<String> onSearch;
   final VoidCallback onAdd;
 
@@ -28,20 +30,20 @@ class _SalesView extends StatelessWidget {
           96,
         ),
         children: [
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: _DairySummaryCard(
                   title: 'Today Sales',
-                  value: 'Rs. 8,500',
+                  value: summary.todaySales,
                   icon: Icons.payments_rounded,
                 ),
               ),
-              SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _DairySummaryCard(
                   title: 'Orders',
-                  value: '24',
+                  value: summary.orders.toString(),
                   icon: Icons.shopping_bag_rounded,
                 ),
               ),
@@ -53,10 +55,13 @@ class _SalesView extends StatelessWidget {
             onChanged: onSearch,
           ),
           const SizedBox(height: AppSpacing.md),
-          for (final sale in sales) ...[
-            _SaleCard(sale: sale),
-            const SizedBox(height: AppSpacing.sm),
-          ],
+          if (sales.isEmpty)
+            const _DairyEmptyMessage(message: 'No sales found')
+          else
+            for (final sale in sales) ...[
+              _SaleCard(sale: sale),
+              const SizedBox(height: AppSpacing.sm),
+            ],
         ],
       ),
     );

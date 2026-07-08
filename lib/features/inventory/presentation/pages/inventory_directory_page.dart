@@ -1,16 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
+import 'package:finhub/core/constants/app_config.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
+import 'package:finhub/core/widgets/error_view.dart';
+import 'package:finhub/core/widgets/loading_indicator.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 part 'construction_dashboard.dart';
 part 'material_categories_screen.dart';
 part 'request_quote_screen.dart';
 part 'orders_screen.dart';
 part 'delivery_tracking_screen.dart';
+part 'construction_api_service.dart';
 part '../widgets/construction_summary_card.dart';
 part '../widgets/construction_quick_action_card.dart';
 part '../widgets/material_category_card.dart';
@@ -47,154 +55,23 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   final _notesController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  final _service = _ConstructionApiService();
+  var _loading = true;
+  var _submittingQuote = false;
+  String? _errorMessage;
+
+  _ConstructionDashboardData _dashboard = const _ConstructionDashboardData();
+  List<_MaterialCategory> _categories = const [];
+  List<_MaterialProduct> _products = const [];
+  List<_OrderEntry> _orders = const [];
+  List<_DeliveryEntry> _deliveries = const [];
   final List<_QuoteRequest> _quotes = [];
 
-  static const List<_MaterialCategory> _categories = [
-    _MaterialCategory('Cement', 'OPC, PPC, bags', Icons.foundation_rounded),
-    _MaterialCategory(
-      'Steel',
-      'TMT bars, rods, sheets',
-      Icons.construction_rounded,
-    ),
-    _MaterialCategory('Sand', 'River sand, M-Sand', Icons.landscape_rounded),
-    _MaterialCategory(
-      'Gitti / Aggregate',
-      '10mm, 20mm, 40mm',
-      Icons.grain_rounded,
-    ),
-    _MaterialCategory(
-      'Concrete',
-      'Ready-mix M20, M25, M30',
-      Icons.factory_rounded,
-    ),
-    _MaterialCategory(
-      'Bricks & Blocks',
-      'Red bricks, fly-ash, AAC',
-      Icons.warehouse_rounded,
-    ),
-  ];
-
-  static const List<_MaterialProduct> _products = [
-    _MaterialProduct('UltraTech PPC Cement', 'Cement', 'Bag', 'Available', 380),
-    _MaterialProduct('ACC OPC Cement', 'Cement', 'Bag', 'Available', 410),
-    _MaterialProduct(
-      'TMT Steel Bar 12mm',
-      'Steel',
-      'Ton',
-      'Available',
-      58000,
-      grade: 'Fe 500D',
-    ),
-    _MaterialProduct(
-      'TMT Steel Bar 16mm',
-      'Steel',
-      'Ton',
-      'Available',
-      57500,
-      grade: 'Fe 500D',
-    ),
-    _MaterialProduct(
-      'River Sand',
-      'Sand',
-      'Tractor / Ton / CFT',
-      'Available',
-      null,
-    ),
-    _MaterialProduct('M-Sand', 'Sand', 'Ton', 'Available', 1250),
-    _MaterialProduct(
-      '20mm Aggregate',
-      'Gitti / Aggregate',
-      'Ton',
-      'Available',
-      950,
-    ),
-    _MaterialProduct(
-      '40mm Aggregate',
-      'Gitti / Aggregate',
-      'Ton',
-      'Available',
-      850,
-    ),
-    _MaterialProduct(
-      'Ready Mix Concrete M20',
-      'Concrete',
-      'Cubic Meter',
-      'Available',
-      null,
-    ),
-    _MaterialProduct(
-      'Ready Mix Concrete M25',
-      'Concrete',
-      'Cubic Meter',
-      'Available',
-      null,
-    ),
-    _MaterialProduct(
-      'Red Brick',
-      'Bricks & Blocks',
-      '1000 pcs',
-      'Available',
-      7500,
-    ),
-    _MaterialProduct('AAC Block', 'Bricks & Blocks', 'pcs', 'Available', 55),
-  ];
-
-  static const List<_OrderEntry> _orders = [
-    _OrderEntry(
-      'CM-2026-0001',
-      'TMT Steel Bar 12mm',
-      '2 Ton',
-      'Rs. 1,16,000',
-      'Confirmed',
-      '08/07/2026',
-      'Site A, Indore',
-    ),
-    _OrderEntry(
-      'CM-2026-0002',
-      'PPC Cement',
-      '100 Bags',
-      'Rs. 38,000',
-      'Pending',
-      '09/07/2026',
-      'Warehouse Road',
-    ),
-    _OrderEntry(
-      'CM-2026-0003',
-      'M-Sand',
-      '10 Ton',
-      'Rs. 12,500',
-      'Delivered',
-      '05/07/2026',
-      'Plot 21, Rau',
-    ),
-  ];
-
-  static const List<_DeliveryEntry> _deliveries = [
-    _DeliveryEntry(
-      'Cement',
-      'UP65 AB 1234',
-      'Ramesh Kumar',
-      'Out for Delivery',
-      '2 hours',
-      0.72,
-    ),
-    _DeliveryEntry(
-      'Steel',
-      'UP65 CD 5678',
-      'Suresh Yadav',
-      'Loading',
-      'Today evening',
-      0.38,
-    ),
-    _DeliveryEntry(
-      'Sand',
-      'UP65 EF 9012',
-      'Amit Singh',
-      'Delivered',
-      'Completed',
-      1,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadConstructionData();
+  }
 
   @override
   void dispose() {
@@ -207,8 +84,93 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _bodyForState();
+    final navDisabled = _loading || _errorMessage != null;
+
+    return Theme(
+      data: _constructionTheme(context),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _titleForTab,
+                style: AppTextStyles.titleMedium(context).copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              if (_tabIndex == 0)
+                Text(
+                  'Quality Materials, Delivered',
+                  style: AppTextStyles.bodySmall(context).copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        body: SafeArea(child: body),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _tabIndex,
+          onDestinationSelected: navDisabled
+              ? null
+              : (value) => setState(() => _tabIndex = value),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard_rounded),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.inventory_2_outlined),
+              selectedIcon: Icon(Icons.inventory_2_rounded),
+              label: 'Materials',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.request_quote_outlined),
+              selectedIcon: Icon(Icons.request_quote_rounded),
+              label: 'Quote',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long_rounded),
+              label: 'Orders',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.local_shipping_outlined),
+              selectedIcon: Icon(Icons.local_shipping_rounded),
+              label: 'Delivery',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bodyForState() {
+    if (_loading) {
+      return const LoadingIndicator(text: 'Loading construction materials...');
+    }
+
+    final errorMessage = _errorMessage;
+    if (errorMessage != null) {
+      return ErrorView(
+        title: 'Unable to load materials',
+        message: errorMessage,
+        retryButtonText: 'Retry',
+        onRetry: _loadConstructionData,
+      );
+    }
+
     final pages = [
       _ConstructionDashboard(
+        dashboard: _dashboard,
         categories: _categories,
         onBrowse: () => setState(() => _tabIndex = 1),
         onQuote: () => setState(() => _tabIndex = 2),
@@ -249,74 +211,14 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         onProductChanged: _setQuoteProduct,
         onUnitChanged: (unit) => setState(() => _quoteUnit = unit),
         onDateChanged: (date) => setState(() => _requiredDate = date),
-        onSubmit: () => _submitQuote('Quote request submitted successfully'),
+        submitting: _submittingQuote,
+        onSubmit: _submitQuote,
       ),
-      const _OrdersScreen(orders: _orders),
-      const _DeliveryTrackingScreen(deliveries: _deliveries),
+      _OrdersScreen(orders: _orders),
+      _DeliveryTrackingScreen(deliveries: _deliveries),
     ];
 
-    return Theme(
-      data: _constructionTheme(context),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _titleForTab,
-                style: AppTextStyles.titleMedium(context).copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              if (_tabIndex == 0)
-                Text(
-                  'Quality Materials, Delivered',
-                  style: AppTextStyles.bodySmall(context).copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        body: SafeArea(child: pages[_tabIndex]),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _tabIndex,
-          onDestinationSelected: (value) => setState(() => _tabIndex = value),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard_rounded),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.inventory_2_outlined),
-              selectedIcon: Icon(Icons.inventory_2_rounded),
-              label: 'Materials',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.request_quote_outlined),
-              selectedIcon: Icon(Icons.request_quote_rounded),
-              label: 'Quote',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Orders',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.local_shipping_outlined),
-              selectedIcon: Icon(Icons.local_shipping_rounded),
-              label: 'Delivery',
-            ),
-          ],
-        ),
-      ),
-    );
+    return pages[_tabIndex];
   }
 
   String get _titleForTab {
@@ -347,9 +249,10 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   }
 
   void _setQuoteCategory(String category) {
-    final firstProduct = _products.firstWhere((product) {
+    final firstProduct = _firstOrNull(_products.where((product) {
       return product.category == category;
-    });
+    }));
+    if (firstProduct == null) return;
     setState(() {
       _quoteCategory = category;
       _quoteProduct = firstProduct.name;
@@ -358,7 +261,10 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   }
 
   void _setQuoteProduct(String productName) {
-    final product = _products.firstWhere((item) => item.name == productName);
+    final product = _firstOrNull(
+      _products.where((item) => item.name == productName),
+    );
+    if (product == null) return;
     setState(() {
       _quoteCategory = product.category;
       _quoteProduct = product.name;
@@ -366,32 +272,127 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     });
   }
 
-  void _submitQuote(String message) {
+  Future<void> _submitQuote() async {
     if (!_formKey.currentState!.validate()) return;
     final product = _selectedQuoteProduct;
-    _quotes.insert(
-      0,
-      _QuoteRequest(
-        product.name,
-        _quoteCategory,
-        '${_quantityController.text.trim()} $_quoteUnit',
-        _locationController.text.trim(),
-        _requiredDate,
-      ),
-    );
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-    _formKey.currentState!.reset();
-    _quantityController.text = '10';
-    _locationController.clear();
-    _phoneController.clear();
-    _notesController.clear();
-    setState(() {});
+    setState(() => _submittingQuote = true);
+
+    try {
+      final quote = await _service.createQuote(
+        bearerToken: AuthSession.instance.bearerToken,
+        categoryId: product.categoryId,
+        productId: product.id,
+        quantity: double.parse(_quantityController.text.trim()),
+        unit: _quoteUnit,
+        deliveryLocation: _locationController.text.trim(),
+        requiredDate: _requiredDate,
+        contactNumber: _phoneController.text.trim(),
+        notes: _notesController.text.trim(),
+      );
+      _quotes.insert(0, quote);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Quote request submitted successfully')),
+      );
+      _formKey.currentState!.reset();
+      _quantityController.text = '10';
+      _locationController.clear();
+      _phoneController.clear();
+      _notesController.clear();
+      await _refreshDashboardAndOrders();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+      setState(() => _submittingQuote = false);
+    }
+  }
+
+  Future<void> _loadConstructionData() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = AuthSession.instance.bearerToken;
+      final results = await Future.wait([
+        _service.fetchDashboard(token),
+        _service.fetchCategories(token),
+        _service.fetchProducts(token),
+        _service.fetchOrders(token),
+        _service.fetchDeliveries(token),
+      ]);
+
+      final categories = results[1] as List<_MaterialCategory>;
+      final products = results[2] as List<_MaterialProduct>;
+      final firstCategory = _firstOrNull(categories);
+      final firstProduct = _firstOrNull(products);
+
+      if (!mounted) return;
+      setState(() {
+        _dashboard = results[0] as _ConstructionDashboardData;
+        _categories = categories;
+        _products = products;
+        _orders = results[3] as List<_OrderEntry>;
+        _deliveries = results[4] as List<_DeliveryEntry>;
+        if (firstCategory != null) {
+          _selectedCategory = firstCategory.name;
+          _quoteCategory = firstCategory.name;
+        }
+        if (firstProduct != null) {
+          _quoteCategory = firstProduct.category;
+          _quoteProduct = firstProduct.name;
+          _quoteUnit = firstProduct.unit;
+        }
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorMessage = _friendlyError(error);
+      });
+    }
+  }
+
+  Future<void> _refreshDashboardAndOrders() async {
+    try {
+      final token = AuthSession.instance.bearerToken;
+      final results = await Future.wait([
+        _service.fetchDashboard(token),
+        _service.fetchOrders(token),
+        _service.fetchDeliveries(token),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _dashboard = results[0] as _ConstructionDashboardData;
+        _orders = results[1] as List<_OrderEntry>;
+        _deliveries = results[2] as List<_DeliveryEntry>;
+        _submittingQuote = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _submittingQuote = false);
+    }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '');
+    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
   }
 
   _MaterialProduct get _selectedQuoteProduct {
-    return _products.firstWhere((product) => product.name == _quoteProduct);
+    return _products.firstWhere(
+      (product) => product.name == _quoteProduct,
+      orElse: () => _products.first,
+    );
   }
+}
+
+T? _firstOrNull<T>(Iterable<T> values) {
+  final iterator = values.iterator;
+  return iterator.moveNext() ? iterator.current : null;
 }
 

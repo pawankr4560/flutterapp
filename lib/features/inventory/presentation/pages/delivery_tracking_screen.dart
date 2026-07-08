@@ -7,6 +7,10 @@ class _DeliveryTrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (deliveries.isEmpty) {
+      return const _EmptyConstructionMessage(message: 'No deliveries found');
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
       itemBuilder: (context, index) {

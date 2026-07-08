@@ -2,6 +2,7 @@ part of 'inventory_directory_page.dart';
 
 class _ConstructionDashboard extends StatelessWidget {
   const _ConstructionDashboard({
+    required this.dashboard,
     required this.categories,
     required this.onBrowse,
     required this.onQuote,
@@ -10,6 +11,7 @@ class _ConstructionDashboard extends StatelessWidget {
     required this.onCategoryTap,
   });
 
+  final _ConstructionDashboardData dashboard;
   final List<_MaterialCategory> categories;
   final VoidCallback onBrowse;
   final VoidCallback onQuote;
@@ -32,25 +34,25 @@ class _ConstructionDashboard extends StatelessWidget {
               childAspectRatio: 1.45,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              children: const [
+              children: [
                 ConstructionSummaryCard(
                   title: 'Total Products',
-                  value: '48',
+                  value: dashboard.totalProducts.toString(),
                   icon: Icons.inventory_2_rounded,
                 ),
                 ConstructionSummaryCard(
                   title: 'Pending Quotes',
-                  value: '6',
+                  value: dashboard.pendingQuotes.toString(),
                   icon: Icons.request_quote_rounded,
                 ),
                 ConstructionSummaryCard(
                   title: 'Active Orders',
-                  value: '3',
+                  value: dashboard.activeOrders.toString(),
                   icon: Icons.receipt_long_rounded,
                 ),
                 ConstructionSummaryCard(
                   title: 'Deliveries Today',
-                  value: '2',
+                  value: dashboard.deliveriesToday.toString(),
                   icon: Icons.local_shipping_rounded,
                 ),
               ],
@@ -119,25 +121,28 @@ class _ConstructionDashboard extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         const _SectionHeader(title: 'Recent Activities'),
         const SizedBox(height: AppSpacing.sm),
-        const _ActivityTile(
-          icon: Icons.request_quote_rounded,
-          title: 'Quote requested for TMT Steel',
-          subtitle: 'Supplier confirmation pending',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _ActivityTile(
-          icon: Icons.check_circle_rounded,
-          title: 'Cement order confirmed',
-          subtitle: '100 bags scheduled for dispatch',
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        const _ActivityTile(
-          icon: Icons.local_shipping_rounded,
-          title: 'Sand delivery scheduled',
-          subtitle: 'Expected today evening',
-        ),
+        if (dashboard.recentActivities.isEmpty)
+          _EmptyConstructionMessage(message: 'No recent activities yet')
+        else
+          for (final activity in dashboard.recentActivities) ...[
+            _ActivityTile(
+              icon: _activityIcon(activity.type),
+              title: activity.title,
+              subtitle: activity.subtitle,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
       ],
     );
   }
+}
+
+IconData _activityIcon(String type) {
+  return switch (type.toUpperCase()) {
+    'QUOTE' => Icons.request_quote_rounded,
+    'ORDER' => Icons.check_circle_rounded,
+    'DELIVERY' => Icons.local_shipping_rounded,
+    _ => Icons.info_rounded,
+  };
 }
 

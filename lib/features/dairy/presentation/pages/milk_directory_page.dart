@@ -1,10 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
+import 'package:finhub/core/constants/app_config.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_form_controls.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
+import 'package:finhub/core/widgets/error_view.dart';
+import 'package:finhub/core/widgets/loading_indicator.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 part 'dairy_home_view.dart';
 part 'collection_view.dart';
@@ -13,6 +20,7 @@ part 'payments_view.dart';
 part 'reports_view.dart';
 part 'customers_screen.dart';
 part 'products_screen.dart';
+part 'dairy_api_service.dart';
 part '../widgets/sheets/collection_form_sheet.dart';
 part '../widgets/sheets/sale_form_sheet.dart';
 part '../widgets/sheets/customer_form_sheet.dart';
@@ -51,78 +59,31 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
   String _salesQuery = '';
   String _period = 'Today';
 
-  final List<_CollectionEntry> _collections = [
-    _CollectionEntry('Rahul Sharma', 'Cow', 20, 4.5, 42, DateTime.now()),
-    _CollectionEntry('Suresh Kumar', 'Buffalo', 15, 6.8, 58, DateTime.now()),
-    _CollectionEntry('Amit Singh', 'Cow', 18, 4.2, 40, DateTime.now()),
-  ];
+  final _service = _DairyApiService();
+  var _loading = true;
+  String? _errorMessage;
 
-  final List<_SaleEntry> _sales = [
-    _SaleEntry('Mohit Store', 'Milk', 10, 60, 'Paid', DateTime.now()),
-    _SaleEntry('Sharma Sweets', 'Paneer', 5, 400, 'Pending', DateTime.now()),
-    _SaleEntry('Fresh Mart', 'Curd', 8, 120, 'Paid', DateTime.now()),
-  ];
+  _DairyDashboardData _dashboard = const _DairyDashboardData();
+  _CollectionSummary _collectionSummary = const _CollectionSummary();
+  _SalesSummary _salesSummary = const _SalesSummary();
+  _PaymentsSummary _paymentsSummary = const _PaymentsSummary();
+  List<_CollectionEntry> _collections = [];
+  List<_SaleEntry> _sales = [];
+  List<_CustomerEntry> _customers = [];
+  List<_ProductEntry> _products = [];
+  List<_PaymentEntry> _payments = [];
+  List<_ReportEntry> _reports = [];
 
-  final List<_CustomerEntry> _customers = [
-    _CustomerEntry(
-      'Rahul Sharma',
-      '9876543210',
-      'Farmer',
-      2500,
-      'Village Road',
-    ),
-    _CustomerEntry('Mohit Store', '9876501234', 'Shop', 0, 'Main Market'),
-    _CustomerEntry('Sharma Sweets', '9812345678', 'Business', 4200, 'MG Road'),
-  ];
-
-  final List<_ProductEntry> _products = [
-    _ProductEntry('Milk', 'L', 85, 48, 60),
-    _ProductEntry('Paneer', 'kg', 12, 320, 400),
-    _ProductEntry('Ghee', 'kg', 8, 540, 650),
-    _ProductEntry('Curd', 'kg', 20, 90, 120),
-    _ProductEntry('Butter', 'kg', 6, 410, 500),
-  ];
-
-  final List<_PaymentEntry> _payments = [
-    _PaymentEntry('Rahul Sharma', 2000, 'Cash', 'Received', DateTime.now()),
-    _PaymentEntry('Sharma Sweets', 4200, 'UPI', 'Pending', DateTime.now()),
-    _PaymentEntry(
-      'Mohit Store',
-      1500,
-      'Bank Transfer',
-      'Received',
-      DateTime.now(),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadDairyData();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _DairyHomeView(
-        products: _products,
-        onOpenCollection: () => setState(() => _tabIndex = 1),
-        onOpenSales: () => setState(() => _tabIndex = 2),
-        onOpenCustomers: () => _openCustomers(),
-        onOpenProducts: () => _openProducts(),
-      ),
-      _CollectionView(
-        entries: _filteredCollections,
-        onSearch: (value) => setState(() => _collectionQuery = value),
-        onAdd: _showAddCollectionSheet,
-      ),
-      _SalesView(
-        sales: _filteredSales,
-        onSearch: (value) => setState(() => _salesQuery = value),
-        onAdd: _showAddSaleSheet,
-      ),
-      _PaymentsView(payments: _payments),
-      _ReportsView(
-        period: _period,
-        onPeriodChanged: (value) {
-          setState(() => _period = value);
-        },
-      ),
-    ];
+    final body = _bodyForState();
+    final navDisabled = _loading || _errorMessage != null;
 
     return Theme(
       data: _dairyTheme(context),
@@ -161,10 +122,12 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
             const SizedBox(width: AppSpacing.xs),
           ],
         ),
-        body: SafeArea(child: pages[_tabIndex]),
+        body: SafeArea(child: body),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tabIndex,
-          onDestinationSelected: (value) => setState(() => _tabIndex = value),
+          onDestinationSelected: navDisabled
+              ? null
+              : (value) => setState(() => _tabIndex = value),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.dashboard_outlined),
@@ -195,6 +158,56 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
         ),
       ),
     );
+  }
+
+  Widget _bodyForState() {
+    if (_loading) {
+      return const LoadingIndicator(text: 'Loading dairy data...');
+    }
+
+    final errorMessage = _errorMessage;
+    if (errorMessage != null) {
+      return ErrorView(
+        title: 'Unable to load dairy data',
+        message: errorMessage,
+        retryButtonText: 'Retry',
+        onRetry: _loadDairyData,
+      );
+    }
+
+    final pages = [
+      _DairyHomeView(
+        dashboard: _dashboard,
+        products: _products,
+        onOpenCollection: () => setState(() => _tabIndex = 1),
+        onOpenSales: () => setState(() => _tabIndex = 2),
+        onOpenCustomers: () => _openCustomers(),
+        onOpenProducts: () => _openProducts(),
+      ),
+      _CollectionView(
+        entries: _filteredCollections,
+        summary: _collectionSummary,
+        onSearch: (value) => setState(() => _collectionQuery = value),
+        onAdd: _showAddCollectionSheet,
+      ),
+      _SalesView(
+        sales: _filteredSales,
+        summary: _salesSummary,
+        onSearch: (value) => setState(() => _salesQuery = value),
+        onAdd: _showAddSaleSheet,
+      ),
+      _PaymentsView(payments: _payments, summary: _paymentsSummary),
+      _ReportsView(
+        period: _period,
+        onPeriodChanged: (value) {
+          setState(() => _period = value);
+          _loadReports(value);
+        },
+        reports: _reports,
+      ),
+    ];
+
+    return pages[_tabIndex];
   }
 
   String get _titleForTab {
@@ -252,7 +265,17 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
       useSafeArea: true,
       builder: (_) => const _CollectionFormSheet(),
     );
-    if (entry != null) setState(() => _collections.insert(0, entry));
+    if (entry == null) return;
+    try {
+      final saved = await _service.createCollection(
+        entry,
+        AuthSession.instance.bearerToken,
+      );
+      setState(() => _collections.insert(0, saved));
+      await _refreshSummaries();
+    } catch (error) {
+      _showError(error);
+    }
   }
 
   Future<void> _showAddSaleSheet() async {
@@ -262,7 +285,17 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
       useSafeArea: true,
       builder: (_) => const _SaleFormSheet(),
     );
-    if (entry != null) setState(() => _sales.insert(0, entry));
+    if (entry == null) return;
+    try {
+      final saved = await _service.createSale(
+        entry,
+        AuthSession.instance.bearerToken,
+      );
+      setState(() => _sales.insert(0, saved));
+      await _refreshSummaries();
+    } catch (error) {
+      _showError(error);
+    }
   }
 
   Future<void> _showAddCustomerSheet() async {
@@ -272,7 +305,16 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
       useSafeArea: true,
       builder: (_) => const _CustomerFormSheet(),
     );
-    if (entry != null) setState(() => _customers.insert(0, entry));
+    if (entry == null) return;
+    try {
+      final saved = await _service.createCustomer(
+        entry,
+        AuthSession.instance.bearerToken,
+      );
+      setState(() => _customers.insert(0, saved));
+    } catch (error) {
+      _showError(error);
+    }
   }
 
   Future<void> _showAddProductSheet() async {
@@ -282,7 +324,113 @@ class _MilkDirectoryPageState extends State<MilkDirectoryPage> {
       useSafeArea: true,
       builder: (_) => const _ProductFormSheet(),
     );
-    if (entry != null) setState(() => _products.insert(0, entry));
+    if (entry == null) return;
+    try {
+      final saved = await _service.createProduct(
+        entry,
+        AuthSession.instance.bearerToken,
+      );
+      setState(() => _products.insert(0, saved));
+      await _refreshSummaries();
+    } catch (error) {
+      _showError(error);
+    }
+  }
+
+  Future<void> _loadDairyData() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = AuthSession.instance.bearerToken;
+      final results = await Future.wait([
+        _service.fetchDashboard(token),
+        _service.fetchProducts(token),
+        _service.fetchCollections(token),
+        _service.fetchSales(token),
+        _service.fetchCustomers(token),
+        _service.fetchPayments(token),
+        _service.fetchReports(_period, token),
+      ]);
+
+      final collections = results[2] as _CollectionListResponse;
+      final sales = results[3] as _SalesListResponse;
+      final payments = results[5] as _PaymentsListResponse;
+      final reports = results[6] as List<_ReportEntry>;
+
+      if (!mounted) return;
+      setState(() {
+        _dashboard = results[0] as _DairyDashboardData;
+        _products = results[1] as List<_ProductEntry>;
+        _collectionSummary = collections.summary;
+        _collections = collections.items;
+        _salesSummary = sales.summary;
+        _sales = sales.items;
+        _customers = results[4] as List<_CustomerEntry>;
+        _paymentsSummary = payments.summary;
+        _payments = payments.items;
+        _reports = reports;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorMessage = _friendlyError(error);
+      });
+    }
+  }
+
+  Future<void> _refreshSummaries() async {
+    try {
+      final token = AuthSession.instance.bearerToken;
+      final results = await Future.wait([
+        _service.fetchDashboard(token),
+        _service.fetchCollections(token),
+        _service.fetchSales(token),
+        _service.fetchPayments(token),
+        _service.fetchReports(_period, token),
+      ]);
+      final collections = results[1] as _CollectionListResponse;
+      final sales = results[2] as _SalesListResponse;
+      final payments = results[3] as _PaymentsListResponse;
+      if (!mounted) return;
+      setState(() {
+        _dashboard = results[0] as _DairyDashboardData;
+        _collectionSummary = collections.summary;
+        _salesSummary = sales.summary;
+        _paymentsSummary = payments.summary;
+        _payments = payments.items;
+        _reports = results[4] as List<_ReportEntry>;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _loadReports(String period) async {
+    try {
+      final reports = await _service.fetchReports(
+        period,
+        AuthSession.instance.bearerToken,
+      );
+      if (!mounted) return;
+      setState(() => _reports = reports);
+    } catch (error) {
+      _showError(error);
+    }
+  }
+
+  void _showError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_friendlyError(error))),
+    );
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '');
+    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
   }
 }
 
