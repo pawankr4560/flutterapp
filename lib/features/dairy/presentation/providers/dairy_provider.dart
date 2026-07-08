@@ -5,22 +5,23 @@ import '../../domain/entities/milk_collection_log.dart';
 
 /// Provides and mutates daily milk collection logs.
 final dairyProvider =
-    NotifierProvider<DairyNotifier, List<MilkCollectionLog>>(
+    AsyncNotifierProvider<DairyNotifier, List<MilkCollectionLog>>(
   DairyNotifier.new,
 );
 
-/// Manages the in-memory dairy collection ledger.
-class DairyNotifier extends Notifier<List<MilkCollectionLog>> {
+/// Manages the dairy collection ledger.
+class DairyNotifier extends AsyncNotifier<List<MilkCollectionLog>> {
   late final DairyRepository _repository;
 
   @override
-  List<MilkCollectionLog> build() {
+  Future<List<MilkCollectionLog>> build() {
     _repository = ref.read(dairyRepositoryProvider);
     return _repository.listLogs();
   }
 
-  void addLog(MilkCollectionLog log) {
-    _repository.addLog(log);
-    state = _repository.listLogs();
+  Future<void> addLog(MilkCollectionLog log) async {
+    await _repository.addLog(log);
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_repository.listLogs);
   }
 }

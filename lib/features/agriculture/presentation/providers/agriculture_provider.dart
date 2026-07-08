@@ -17,35 +17,36 @@ class AgricultureState {
 
 /// Provides field records and pesticide/fertilizer stock.
 final agricultureProvider =
-    NotifierProvider<AgricultureNotifier, AgricultureState>(
+    AsyncNotifierProvider<AgricultureNotifier, AgricultureState>(
   AgricultureNotifier.new,
 );
 
-/// Manages in-memory agriculture records.
-class AgricultureNotifier extends Notifier<AgricultureState> {
+/// Manages agriculture records.
+class AgricultureNotifier extends AsyncNotifier<AgricultureState> {
   late final AgricultureRepository _repository;
 
   @override
-  AgricultureState build() {
+  Future<AgricultureState> build() {
     _repository = ref.read(agricultureRepositoryProvider);
     return _currentState();
   }
 
-  AgricultureState _currentState() {
+  Future<AgricultureState> _currentState() async {
     return AgricultureState(
-      fields: _repository.listFields(),
-      stockItems: _repository.listStockItems(),
+      fields: await _repository.listFields(),
+      stockItems: await _repository.listStockItems(),
     );
   }
 
-  void logSpray({
+  Future<void> logSpray({
     required String fieldId,
     required DateTime applicationDate,
-  }) {
-    _repository.logSpray(
+  }) async {
+    await _repository.logSpray(
       fieldId: fieldId,
       applicationDate: applicationDate,
     );
-    state = _currentState();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_currentState);
   }
 }

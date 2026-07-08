@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:finhub/core/constants/app_config.dart';
 import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
 import 'package:finhub/features/agriculture/domain/entities/agriculture_stock_item.dart';
 import 'package:finhub/features/agriculture/domain/entities/field_record.dart';
 
@@ -155,8 +156,12 @@ class AgricultureService {
   }
 
   Object? _decode(String body) {
-    if (body.isEmpty) return null;
-    return jsonDecode(body);
+    try {
+      if (body.isEmpty) return null;
+      return jsonDecode(body);
+    } catch (_) {
+      throw const ApiException('Unable to parse agriculture response.');
+    }
   }
 }
 

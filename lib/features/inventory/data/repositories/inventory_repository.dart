@@ -1,17 +1,86 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 import '../../domain/entities/inventory_item.dart';
 
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
-  return InMemoryInventoryRepository();
+  return HttpInventoryRepository();
 });
 
 abstract class InventoryRepository {
-  List<InventoryItem> listItems();
+  Future<List<InventoryItem>> listItems();
 
-  void addItem(InventoryItem item);
+  Future<void> addItem(InventoryItem item);
 
-  void updateStock(String itemId, int newStock);
+  Future<void> updateStock(String itemId, int newStock);
+}
+
+class HttpInventoryRepository implements InventoryRepository {
+  HttpInventoryRepository({
+    ApiClient? apiClient,
+    String Function()? bearerTokenProvider,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _bearerTokenProvider =
+            bearerTokenProvider ?? (() => AuthSession.instance.bearerToken);
+
+  final ApiClient _apiClient;
+  final String Function() _bearerTokenProvider;
+
+  Uri get _itemsUri => Uri.parse('${AppConfig.baseUrl}/construction/products');
+
+  @override
+  Future<List<InventoryItem>> listItems() async {
+    final response = await _apiClient.get(
+      _itemsUri,
+      bearerToken: _bearerTokenProvider(),
+    );
+    return _itemsFromResponse(response.body);
+  }
+
+  @override
+  Future<void> addItem(InventoryItem item) async {
+    await _apiClient.post(
+      _itemsUri,
+      bearerToken: _bearerTokenProvider(),
+      body: item.toJson(),
+    );
+  }
+
+  @override
+  Future<void> updateStock(String itemId, int newStock) async {
+    final uri = Uri.parse('${AppConfig.baseUrl}/construction/products/$itemId/stock');
+    await _apiClient.put(
+      uri,
+      bearerToken: _bearerTokenProvider(),
+      body: {'currentStock': newStock},
+    );
+  }
+
+  List<InventoryItem> _itemsFromResponse(String body) {
+    try {
+      final decoded = body.trim().isEmpty ? null : jsonDecode(body);
+      final items = switch (decoded) {
+        {'data': {'items': final List<dynamic> values}} => values,
+        {'items': final List<dynamic> values} => values,
+        {'data': final List<dynamic> values} => values,
+        List<dynamic> values => values,
+        _ => const <dynamic>[],
+      };
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(InventoryItem.fromJson)
+          .where((item) => item.id.isNotEmpty)
+          .toList();
+    } catch (_) {
+      throw const ApiException('Unable to parse inventory response.');
+    }
+  }
 }
 
 class InMemoryInventoryRepository implements InventoryRepository {
@@ -73,15 +142,15 @@ class InMemoryInventoryRepository implements InventoryRepository {
   ];
 
   @override
-  List<InventoryItem> listItems() => List.unmodifiable(_items);
+  Future<List<InventoryItem>> listItems() async => List.unmodifiable(_items);
 
   @override
-  void addItem(InventoryItem item) {
+  Future<void> addItem(InventoryItem item) async {
     _items = [..._items, item];
   }
 
   @override
-  void updateStock(String itemId, int newStock) {
+  Future<void> updateStock(String itemId, int newStock) async {
     _items = [
       for (final item in _items)
         if (item.id == itemId)

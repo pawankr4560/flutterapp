@@ -27,6 +27,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isUploadingProfileImage = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _refreshProfileFromBackend();
+  }
+
   String get _displayName {
     final name = AuthSession.instance.userName.trim();
     return name.isEmpty ? 'SmartSathi user' : name;
@@ -189,6 +195,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() => _isUploadingProfileImage = false);
       }
+    }
+  }
+
+  Future<void> _refreshProfileFromBackend() async {
+    final userId = AuthSession.instance.userId;
+    final token = AuthSession.instance.bearerToken;
+    if (userId.isEmpty || token.isEmpty) {
+      return;
+    }
+
+    try {
+      final response = await _profileService.fetchProfile(
+        userId: userId,
+        bearerToken: token,
+      );
+      await AuthSession.instance.updateFromResponse(response);
+    } catch (_) {
+      // Keep showing cached login-time profile data if refresh fails.
     }
   }
 

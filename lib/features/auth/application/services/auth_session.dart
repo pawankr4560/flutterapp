@@ -186,6 +186,18 @@ class AuthSession extends ChangeNotifier {
         address: address,
         profileImageUrl: profileImageUrl,
       );
+    } else if (displayName != null ||
+        email != null ||
+        phone != null ||
+        address != null ||
+        profileImageUrl != null) {
+      await updateProfile(
+        userName: displayName,
+        email: email,
+        phone: phone,
+        address: address,
+        profileImageUrl: profileImageUrl,
+      );
     }
   }
 

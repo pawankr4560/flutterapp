@@ -1,15 +1,88 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 import '../../domain/entities/milk_collection_log.dart';
 
 final dairyRepositoryProvider = Provider<DairyRepository>((ref) {
-  return InMemoryDairyRepository();
+  return HttpDairyRepository();
 });
 
 abstract class DairyRepository {
-  List<MilkCollectionLog> listLogs();
+  Future<List<MilkCollectionLog>> listLogs();
 
-  void addLog(MilkCollectionLog log);
+  Future<void> addLog(MilkCollectionLog log);
+}
+
+class HttpDairyRepository implements DairyRepository {
+  HttpDairyRepository({
+    ApiClient? apiClient,
+    String Function()? bearerTokenProvider,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _bearerTokenProvider =
+            bearerTokenProvider ?? (() => AuthSession.instance.bearerToken);
+
+  final ApiClient _apiClient;
+  final String Function() _bearerTokenProvider;
+
+  Uri get _collectionsUri =>
+      Uri.parse('${AppConfig.baseUrl}/dairy/collections');
+
+  @override
+  Future<List<MilkCollectionLog>> listLogs() async {
+    final response = await _apiClient.get(
+      _collectionsUri,
+      bearerToken: _bearerTokenProvider(),
+    );
+    return _logsFromResponse(response.body);
+  }
+
+  @override
+  Future<void> addLog(MilkCollectionLog log) async {
+    await _apiClient.post(
+      _collectionsUri,
+      bearerToken: _bearerTokenProvider(),
+      body: {
+        'farmerName': log.farmerName,
+        'milkType': log.shift,
+        'quantity': log.quantityInLiters,
+        'fat': log.fatPercentage,
+        'rate': log.ratePerLiter,
+        'collectionDate': _apiDate(log.date),
+      },
+    );
+  }
+
+  List<MilkCollectionLog> _logsFromResponse(String body) {
+    try {
+      final decoded = body.trim().isEmpty ? null : jsonDecode(body);
+      final items = switch (decoded) {
+        {'data': {'items': final List<dynamic> values}} => values,
+        {'items': final List<dynamic> values} => values,
+        {'data': final List<dynamic> values} => values,
+        List<dynamic> values => values,
+        _ => const <dynamic>[],
+      };
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(MilkCollectionLog.fromJson)
+          .where((log) => log.id.isNotEmpty)
+          .toList();
+    } catch (_) {
+      throw const ApiException('Unable to parse dairy collections response.');
+    }
+  }
+
+  String _apiDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
 }
 
 class InMemoryDairyRepository implements DairyRepository {
@@ -49,10 +122,10 @@ class InMemoryDairyRepository implements DairyRepository {
   late List<MilkCollectionLog> _logs;
 
   @override
-  List<MilkCollectionLog> listLogs() => List.unmodifiable(_logs);
+  Future<List<MilkCollectionLog>> listLogs() async => List.unmodifiable(_logs);
 
   @override
-  void addLog(MilkCollectionLog log) {
+  Future<void> addLog(MilkCollectionLog log) async {
     _logs = [..._logs, log];
   }
 }

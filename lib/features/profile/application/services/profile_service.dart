@@ -12,6 +12,29 @@ class ProfileService {
 
   final ApiClient _apiClient;
 
+  Future<Map<String, dynamic>?> fetchProfile({
+    required String userId,
+    required String bearerToken,
+  }) async {
+    if (userId.isEmpty) {
+      throw const ApiException('User ID is missing. Please login again.');
+    }
+
+    final uri = Uri.parse('${AppConfig.baseUrl}/Auth/users/$userId/profile');
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
+
+    if (response.body.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(response.body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> updateProfile({
     required String userId,
     required String bearerToken,

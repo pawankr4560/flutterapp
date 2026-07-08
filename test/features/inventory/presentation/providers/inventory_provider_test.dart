@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('in-memory repository adds items and updates stock', () {
+  test('in-memory repository adds items and updates stock', () async {
     final repository = InMemoryInventoryRepository();
     const item = InventoryItem(
       id: 'item-test',
@@ -17,22 +17,29 @@ void main() {
       sellingPrice: 12,
     );
 
-    repository.addItem(item);
-    repository.updateStock('item-test', 9);
+    await repository.addItem(item);
+    await repository.updateStock('item-test', 9);
 
-    final saved = repository.listItems().singleWhere(
+    final saved = (await repository.listItems()).singleWhere(
       (inventoryItem) => inventoryItem.id == 'item-test',
     );
     expect(saved.currentStock, 9);
     expect(saved.name, 'Test item');
   });
 
-  test('notifier publishes repository-backed add and update changes', () {
-    final container = ProviderContainer();
+  test('notifier publishes repository-backed add and update changes', () async {
+    final container = ProviderContainer(
+      overrides: [
+        inventoryRepositoryProvider.overrideWithValue(
+          InMemoryInventoryRepository(),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
 
     final notifier = container.read(inventoryProvider.notifier);
-    final initialCount = container.read(inventoryProvider).length;
+    final initialItems = await container.read(inventoryProvider.future);
+    final initialCount = initialItems.length;
     const item = InventoryItem(
       id: 'item-notifier-test',
       name: 'Notifier item',
@@ -43,15 +50,15 @@ void main() {
       sellingPrice: 25,
     );
 
-    notifier.addItem(item);
+    await notifier.addItem(item);
 
-    expect(container.read(inventoryProvider), hasLength(initialCount + 1));
-    expect(container.read(inventoryProvider).last.id, 'item-notifier-test');
+    final withNewItem = container.read(inventoryProvider).valueOrNull ?? [];
+    expect(withNewItem, hasLength(initialCount + 1));
+    expect(withNewItem.last.id, 'item-notifier-test');
 
-    notifier.updateStock('item-notifier-test', 11);
+    await notifier.updateStock('item-notifier-test', 11);
 
-    final updated = container
-        .read(inventoryProvider)
+    final updated = (container.read(inventoryProvider).valueOrNull ?? [])
         .singleWhere(
           (inventoryItem) => inventoryItem.id == 'item-notifier-test',
         );

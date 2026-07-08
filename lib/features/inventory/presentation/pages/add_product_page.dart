@@ -111,7 +111,7 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final now = DateTime.now();
     final unitPrice = double.parse(_unitPriceController.text);
@@ -124,7 +124,8 @@ class _AddProductPageState extends ConsumerState<AddProductPage> {
       costPrice: unitPrice,
       sellingPrice: unitPrice,
     );
-    ref.read(inventoryProvider.notifier).addItem(item);
+    await ref.read(inventoryProvider.notifier).addItem(item);
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 

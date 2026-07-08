@@ -1,21 +1,83 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:finhub/features/agriculture/application/services/agriculture_service.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
+
 import '../../domain/entities/agriculture_stock_item.dart';
 import '../../domain/entities/field_record.dart';
 
 final agricultureRepositoryProvider = Provider<AgricultureRepository>((ref) {
-  return InMemoryAgricultureRepository();
+  return HttpAgricultureRepository();
 });
 
 abstract class AgricultureRepository {
-  List<FieldRecord> listFields();
+  Future<List<FieldRecord>> listFields();
 
-  List<AgricultureStockItem> listStockItems();
+  Future<List<AgricultureStockItem>> listStockItems();
 
-  void logSpray({
+  Future<void> logSpray({
     required String fieldId,
     required DateTime applicationDate,
   });
+}
+
+class HttpAgricultureRepository implements AgricultureRepository {
+  HttpAgricultureRepository({
+    AgricultureService? service,
+    String Function()? bearerTokenProvider,
+  })  : _service = service ?? AgricultureService(),
+        _bearerTokenProvider =
+            bearerTokenProvider ?? (() => AuthSession.instance.bearerToken);
+
+  final AgricultureService _service;
+  final String Function() _bearerTokenProvider;
+  AgricultureDashboardData? _cachedDashboard;
+
+  @override
+  Future<List<FieldRecord>> listFields() async {
+    final dashboard = await _fetchDashboard();
+    return dashboard.fields;
+  }
+
+  @override
+  Future<List<AgricultureStockItem>> listStockItems() async {
+    final dashboard = await _fetchDashboard();
+    return dashboard.stockItems;
+  }
+
+  @override
+  Future<void> logSpray({
+    required String fieldId,
+    required DateTime applicationDate,
+  }) async {
+    final dashboard = await _fetchDashboard();
+    final field = dashboard.fields.firstWhere((field) => field.id == fieldId);
+    final products = await _service.fetchSprayProducts(_bearerTokenProvider());
+    final product = products.isEmpty
+        ? const SprayProduct(
+            id: '',
+            name: '',
+            dosagePerAcre: 0,
+            dosageUnit: '',
+            displayLabel: '',
+          )
+        : products.first;
+    await _service.logSpray(
+      bearerToken: _bearerTokenProvider(),
+      field: field,
+      product: product,
+      applicationDate: applicationDate,
+    );
+    _cachedDashboard = null;
+  }
+
+  Future<AgricultureDashboardData> _fetchDashboard() async {
+    final cached = _cachedDashboard;
+    if (cached != null) return cached;
+    final dashboard = await _service.fetchDashboard(_bearerTokenProvider());
+    _cachedDashboard = dashboard;
+    return dashboard;
+  }
 }
 
 class InMemoryAgricultureRepository implements AgricultureRepository {
@@ -74,18 +136,18 @@ class InMemoryAgricultureRepository implements AgricultureRepository {
   ];
 
   @override
-  List<FieldRecord> listFields() => List.unmodifiable(_fields);
+  Future<List<FieldRecord>> listFields() async => List.unmodifiable(_fields);
 
   @override
-  List<AgricultureStockItem> listStockItems() {
+  Future<List<AgricultureStockItem>> listStockItems() async {
     return List.unmodifiable(_stockItems);
   }
 
   @override
-  void logSpray({
+  Future<void> logSpray({
     required String fieldId,
     required DateTime applicationDate,
-  }) {
+  }) async {
     _fields = [
       for (final field in _fields)
         field.id == fieldId

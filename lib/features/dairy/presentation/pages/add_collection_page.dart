@@ -45,7 +45,9 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final farmers = _farmerNames(ref.watch(dairyProvider));
+    final farmers = _farmerNames(
+      ref.watch(dairyProvider).valueOrNull ?? const [],
+    );
     _farmerName ??= farmers.first;
 
     return Scaffold(
@@ -123,7 +125,7 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
     return names.isEmpty ? ['Suresh Patel'] : names;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final now = DateTime.now();
     final log = MilkCollectionLog(
@@ -135,7 +137,8 @@ class _AddCollectionPageState extends ConsumerState<AddCollectionPage> {
       ratePerLiter: _rate,
       date: now,
     );
-    ref.read(dairyProvider.notifier).addLog(log);
+    await ref.read(dairyProvider.notifier).addLog(log);
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 

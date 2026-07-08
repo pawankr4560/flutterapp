@@ -27,6 +27,15 @@ class AgricultureStockItem {
       status: _asString(json['status'], fallback: 'Sufficient'),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'quantityLabel': quantityLabel,
+      'status': status,
+    };
+  }
 }
 
 String _asString(Object? value, {String fallback = ''}) {

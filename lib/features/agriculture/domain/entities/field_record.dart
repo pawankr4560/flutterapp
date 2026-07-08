@@ -28,6 +28,17 @@ class FieldRecord {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'crop': crop,
+      'areaAcres': areaAcres,
+      'status': status,
+      'lastSprayedDate': _apiDate(lastSprayedDate),
+    };
+  }
+
   bool get needsAttention => status.toLowerCase() == 'needs attention';
 
   FieldRecord copyWith({
@@ -67,4 +78,10 @@ double? _asDouble(Object? value) {
 DateTime? _asDate(Object? value) {
   final string = _asString(value);
   return string.isEmpty ? null : DateTime.tryParse(string);
+}
+
+String _apiDate(DateTime date) {
+  return '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 }
