@@ -40,10 +40,16 @@ class _ActivityEntry {
 
   factory _ActivityEntry.fromJson(Map<String, dynamic> json) {
     return _ActivityEntry(
-      id: _asString(json['id']),
+      id: _asString(json['activityId'], fallback: _asString(json['id'])),
       type: _asString(json['type']),
       title: _asString(json['title']),
-      subtitle: _asString(json['subtitle']),
+      subtitle: _asString(
+        json['description'],
+        fallback: _asString(
+          json['subtitle'],
+          fallback: _displayDate(_asString(json['createdAt'])),
+        ),
+      ),
     );
   }
 
@@ -94,6 +100,23 @@ class _MaterialProduct {
       _asString(json['stockStatus'], fallback: _asString(json['stock'])),
       _asDouble(json['rate']),
       grade: _asNullableString(json['grade']),
+    );
+  }
+
+  _MaterialProduct withCategoryName(String categoryName) {
+    if (categoryName.isEmpty || category == categoryName) {
+      return this;
+    }
+
+    return _MaterialProduct(
+      id,
+      name,
+      categoryId,
+      categoryName,
+      unit,
+      stock,
+      rate,
+      grade: grade,
     );
   }
 

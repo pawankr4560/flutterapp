@@ -7,7 +7,7 @@ class AppConfig {
   );
 
   static const String _defaultBaseUrl =
-      'https://testwbapp-ecg6d9grbnguf0b2.centralindia-01.azurewebsites.net/api';
+      'https://localhost:7002/api';
 
   static const String _baseUrlOverride = String.fromEnvironment(
     'API_BASE_URL',

@@ -30,14 +30,48 @@ class _ConstructionApiService {
         .toList();
   }
 
-  Future<List<_MaterialProduct>> fetchProducts(String bearerToken) async {
-    final response = await _apiClient.get(_productsUri, bearerToken: bearerToken);
+  Future<List<_MaterialProduct>> fetchProducts(
+    String bearerToken, {
+    String? categoryId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final uri = categoryId == null || categoryId.isEmpty
+        ? _productsUri
+        : _productsUri.replace(
+            queryParameters: {
+              'categoryId': categoryId,
+              'page': page.toString(),
+              'limit': limit.toString(),
+            },
+          );
+    final response = await _apiClient.get(uri, bearerToken: bearerToken);
     final items = _itemsList(response.body);
     return items
         .whereType<Map<String, dynamic>>()
         .map(_MaterialProduct.fromJson)
         .where((product) => product.id.isNotEmpty && product.name.isNotEmpty)
         .toList();
+  }
+
+  Future<List<_MaterialProduct>> fetchProductsForCategories(
+    String bearerToken,
+    List<_MaterialCategory> categories,
+  ) async {
+    final products = await fetchProducts(bearerToken);
+    if (categories.isEmpty || products.isEmpty) {
+      return products;
+    }
+
+    final categoryNamesById = {
+      for (final category in categories) category.id: category.name,
+    };
+    return [
+      for (final product in products)
+        product.withCategoryName(
+          categoryNamesById[product.categoryId] ?? product.category,
+        ),
+    ];
   }
 
   Future<List<_OrderEntry>> fetchOrders(String bearerToken) async {

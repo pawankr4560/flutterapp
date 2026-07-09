@@ -186,9 +186,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       _MaterialCategoriesScreen(
         categories: _categories,
         selectedCategory: _selectedCategory,
-        products: _products
-            .where((product) => product.category == _selectedCategory)
-            .toList(),
+        products: _productsForCategory(_selectedCategory),
         onCategorySelected: (category) {
           setState(() => _selectedCategory = category);
         },
@@ -249,9 +247,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   }
 
   void _setQuoteCategory(String category) {
-    final firstProduct = _firstOrNull(_products.where((product) {
-      return product.category == category;
-    }));
+    final firstProduct = _firstOrNull(_productsForCategory(category));
     if (firstProduct == null) return;
     setState(() {
       _quoteCategory = category;
@@ -317,16 +313,18 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
 
     try {
       final token = AuthSession.instance.bearerToken;
-      final results = await Future.wait([
+      final results = await Future.wait<Object>([
         _service.fetchDashboard(token),
         _service.fetchCategories(token),
-        _service.fetchProducts(token),
         _service.fetchOrders(token),
         _service.fetchDeliveries(token),
       ]);
 
       final categories = results[1] as List<_MaterialCategory>;
-      final products = results[2] as List<_MaterialProduct>;
+      final products = await _service.fetchProductsForCategories(
+        token,
+        categories,
+      );
       final firstCategory = _firstOrNull(categories);
       final firstProduct = _firstOrNull(products);
 
@@ -335,8 +333,8 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         _dashboard = results[0] as _ConstructionDashboardData;
         _categories = categories;
         _products = products;
-        _orders = results[3] as List<_OrderEntry>;
-        _deliveries = results[4] as List<_DeliveryEntry>;
+        _orders = results[2] as List<_OrderEntry>;
+        _deliveries = results[3] as List<_DeliveryEntry>;
         if (firstCategory != null) {
           _selectedCategory = firstCategory.name;
           _quoteCategory = firstCategory.name;
@@ -388,6 +386,16 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       (product) => product.name == _quoteProduct,
       orElse: () => _products.first,
     );
+  }
+
+  List<_MaterialProduct> _productsForCategory(String categoryName) {
+    final category = _firstOrNull(
+      _categories.where((item) => item.name == categoryName),
+    );
+    return _products.where((product) {
+      return product.category == categoryName ||
+          (category != null && product.categoryId == category.id);
+    }).toList();
   }
 }
 

@@ -41,9 +41,13 @@ class _RequestQuoteScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categoryProducts = products
-        .where((product) => product.category == selectedCategory)
-        .toList();
+    final category = _firstOrNull(
+      categories.where((item) => item.name == selectedCategory),
+    );
+    final categoryProducts = products.where((product) {
+      return product.category == selectedCategory ||
+          (category != null && product.categoryId == category.id);
+    }).toList();
     if (products.isEmpty || categoryProducts.isEmpty) {
       return const _EmptyConstructionMessage(
         message: 'No materials are available for quote requests yet',
@@ -57,6 +61,23 @@ class _RequestQuoteScreen extends StatelessWidget {
     final estimatedAmount = selected.rate == null
         ? null
         : selected.rate! * quantity;
+    final unitOptions = <String>{
+      selectedUnit,
+      selected.unit,
+      for (final product in categoryProducts) product.unit,
+      'Bag',
+      'Ton',
+      'CFT',
+      'Cubic Meter',
+      '1000 pcs',
+      'pcs',
+      'Pieces',
+      'Kilogram',
+      'Gram',
+      'Litre',
+      'Millilitre',
+      'Tractor / Ton / CFT',
+    }.where((unit) => unit.isNotEmpty).toList();
 
     return Form(
       key: formKey,
@@ -91,15 +112,7 @@ class _RequestQuoteScreen extends StatelessWidget {
           AppDropdownField<String>(
             label: 'Unit',
             value: selectedUnit,
-            items: const [
-              'Bag',
-              'Ton',
-              'CFT',
-              'Cubic Meter',
-              '1000 pcs',
-              'pcs',
-              'Tractor / Ton / CFT',
-            ],
+            items: unitOptions,
             onChanged: onUnitChanged,
             fallbackToFirst: true,
           ),
