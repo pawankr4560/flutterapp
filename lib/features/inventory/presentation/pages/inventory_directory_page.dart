@@ -26,6 +26,7 @@ part '../widgets/material_card.dart';
 part '../widgets/construction_status_badge.dart';
 part '../widgets/delivery_tracking_card.dart';
 part '../widgets/order_card.dart';
+part '../widgets/quote_card.dart';
 part '../widgets/activity_tile.dart';
 part '../widgets/estimate_panel.dart';
 part '../widgets/section_header.dart';
@@ -46,7 +47,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   String _selectedCategory = 'Cement';
   String _quoteCategory = 'Cement';
   String _quoteProduct = 'UltraTech PPC Cement';
-  String _quoteUnit = 'Bag';
+  String _quoteUnit = '';
   DateTime _requiredDate = DateTime.now().add(const Duration(days: 1));
 
   final _quantityController = TextEditingController(text: '10');
@@ -58,11 +59,13 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   final _service = _ConstructionApiService();
   var _loading = true;
   var _submittingQuote = false;
+  String? _acceptingQuoteId;
   String? _errorMessage;
 
   _ConstructionDashboardData _dashboard = const _ConstructionDashboardData();
   List<_MaterialCategory> _categories = const [];
   List<_MaterialProduct> _products = const [];
+  List<_ConstructionUnit> _units = const [];
   List<_OrderEntry> _orders = const [];
   List<_DeliveryEntry> _deliveries = const [];
   final List<_QuoteRequest> _quotes = [];
@@ -197,6 +200,9 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         formKey: _formKey,
         categories: _categories,
         products: _products,
+        units: _units,
+        quotes: _quotes,
+        acceptingQuoteId: _acceptingQuoteId,
         selectedCategory: _quoteCategory,
         selectedProduct: _quoteProduct,
         selectedUnit: _quoteUnit,
@@ -211,6 +217,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         onDateChanged: (date) => setState(() => _requiredDate = date),
         submitting: _submittingQuote,
         onSubmit: _submitQuote,
+        onAcceptQuote: _acceptQuote,
       ),
       _OrdersScreen(orders: _orders),
       _DeliveryTrackingScreen(deliveries: _deliveries),
@@ -252,7 +259,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     setState(() {
       _quoteCategory = category;
       _quoteProduct = firstProduct.name;
-      _quoteUnit = firstProduct.unit;
+      _quoteUnit = _unitNameForProduct(firstProduct);
     });
   }
 
@@ -264,13 +271,15 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     setState(() {
       _quoteCategory = product.category;
       _quoteProduct = product.name;
-      _quoteUnit = product.unit;
+      _quoteUnit = _unitNameForProduct(product);
     });
   }
 
   Future<void> _submitQuote() async {
     if (!_formKey.currentState!.validate()) return;
     final product = _selectedQuoteProduct;
+    final quantity = double.parse(_quantityController.text.trim());
+    final estimatedAmount = (product.rate ?? 0) * quantity;
     setState(() => _submittingQuote = true);
 
     try {
@@ -278,8 +287,9 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         bearerToken: AuthSession.instance.bearerToken,
         categoryId: product.categoryId,
         productId: product.id,
-        quantity: double.parse(_quantityController.text.trim()),
-        unit: _quoteUnit,
+        quantity: quantity,
+        unitId: _selectedUnitId(product),
+        estimatedAmount: estimatedAmount,
         deliveryLocation: _locationController.text.trim(),
         requiredDate: _requiredDate,
         contactNumber: _phoneController.text.trim(),
@@ -305,6 +315,33 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     }
   }
 
+  Future<void> _acceptQuote(_QuoteRequest quote) async {
+    setState(() => _acceptingQuoteId = quote.id);
+
+    try {
+      await _service.createOrderFromQuote(
+        bearerToken: AuthSession.instance.bearerToken,
+        quoteId: quote.id,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Order placed successfully')),
+      );
+      await _refreshDashboardAndOrders();
+      if (!mounted) return;
+      setState(() {
+        _acceptingQuoteId = null;
+        _tabIndex = 3;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(error))),
+      );
+      setState(() => _acceptingQuoteId = null);
+    }
+  }
+
   Future<void> _loadConstructionData() async {
     setState(() {
       _loading = true;
@@ -316,11 +353,15 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       final results = await Future.wait<Object>([
         _service.fetchDashboard(token),
         _service.fetchCategories(token),
+        _service.fetchUnits(token),
+        _service.fetchQuotes(token),
         _service.fetchOrders(token),
         _service.fetchDeliveries(token),
       ]);
 
       final categories = results[1] as List<_MaterialCategory>;
+      final units = results[2] as List<_ConstructionUnit>;
+      final quotes = results[3] as List<_QuoteRequest>;
       final products = await _service.fetchProductsForCategories(
         token,
         categories,
@@ -332,9 +373,13 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       setState(() {
         _dashboard = results[0] as _ConstructionDashboardData;
         _categories = categories;
+        _units = units;
         _products = products;
-        _orders = results[2] as List<_OrderEntry>;
-        _deliveries = results[3] as List<_DeliveryEntry>;
+        _quotes
+          ..clear()
+          ..addAll(quotes);
+        _orders = results[4] as List<_OrderEntry>;
+        _deliveries = results[5] as List<_DeliveryEntry>;
         if (firstCategory != null) {
           _selectedCategory = firstCategory.name;
           _quoteCategory = firstCategory.name;
@@ -342,7 +387,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         if (firstProduct != null) {
           _quoteCategory = firstProduct.category;
           _quoteProduct = firstProduct.name;
-          _quoteUnit = firstProduct.unit;
+          _quoteUnit = _unitNameForProduct(firstProduct);
         }
         _loading = false;
       });
@@ -360,14 +405,18 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       final token = AuthSession.instance.bearerToken;
       final results = await Future.wait([
         _service.fetchDashboard(token),
+        _service.fetchQuotes(token),
         _service.fetchOrders(token),
         _service.fetchDeliveries(token),
       ]);
       if (!mounted) return;
       setState(() {
         _dashboard = results[0] as _ConstructionDashboardData;
-        _orders = results[1] as List<_OrderEntry>;
-        _deliveries = results[2] as List<_DeliveryEntry>;
+        _quotes
+          ..clear()
+          ..addAll(results[1] as List<_QuoteRequest>);
+        _orders = results[2] as List<_OrderEntry>;
+        _deliveries = results[3] as List<_DeliveryEntry>;
         _submittingQuote = false;
       });
     } catch (_) {
@@ -396,6 +445,32 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       return product.category == categoryName ||
           (category != null && product.categoryId == category.id);
     }).toList();
+  }
+
+  String _selectedUnitId(_MaterialProduct product) {
+    final selectedUnit = _firstOrNull(
+      _units.where((unit) => unit.matches(_quoteUnit)),
+    );
+    if (selectedUnit != null) return selectedUnit.id;
+
+    final matchingUnitProduct = _firstOrNull(
+      _productsForCategory(product.category).where((item) {
+        return item.unit == _quoteUnit && item.unitId.isNotEmpty;
+      }),
+    );
+    return matchingUnitProduct?.unitId ?? product.unitId;
+  }
+
+  String _unitNameForProduct(_MaterialProduct product) {
+    final productUnit = _firstOrNull(
+      _units.where((unit) {
+        return unit.id == product.unitId || unit.matches(product.unit);
+      }),
+    );
+    if (productUnit != null) return productUnit.name;
+
+    final firstUnit = _firstOrNull(_units);
+    return product.unit.isNotEmpty ? product.unit : firstUnit?.name ?? '';
   }
 }
 

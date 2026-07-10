@@ -10,6 +10,7 @@ class _ConstructionApiService {
   Uri get _categoriesUri =>
       Uri.parse('${AppConfig.baseUrl}/construction/categories');
   Uri get _productsUri => Uri.parse('${AppConfig.baseUrl}/construction/products');
+  Uri get _unitsUri => Uri.parse('${AppConfig.baseUrl}/construction/units');
   Uri get _quotesUri => Uri.parse('${AppConfig.baseUrl}/construction/quotes');
   Uri get _ordersUri => Uri.parse('${AppConfig.baseUrl}/construction/orders');
   Uri get _deliveriesUri =>
@@ -74,6 +75,24 @@ class _ConstructionApiService {
     ];
   }
 
+  Future<List<_ConstructionUnit>> fetchUnits(String bearerToken) async {
+    final response = await _apiClient.get(_unitsUri, bearerToken: bearerToken);
+    return _dataList(response.body)
+        .whereType<Map<String, dynamic>>()
+        .map(_ConstructionUnit.fromJson)
+        .where((unit) => unit.id.isNotEmpty && unit.name.isNotEmpty)
+        .toList();
+  }
+
+  Future<List<_QuoteRequest>> fetchQuotes(String bearerToken) async {
+    final response = await _apiClient.get(_quotesUri, bearerToken: bearerToken);
+    return _dataList(response.body)
+        .whereType<Map<String, dynamic>>()
+        .map(_QuoteRequest.fromJson)
+        .where((quote) => quote.id.isNotEmpty)
+        .toList();
+  }
+
   Future<List<_OrderEntry>> fetchOrders(String bearerToken) async {
     final response = await _apiClient.get(_ordersUri, bearerToken: bearerToken);
     final items = _itemsList(response.body);
@@ -82,6 +101,17 @@ class _ConstructionApiService {
         .map(_OrderEntry.fromJson)
         .where((order) => order.id.isNotEmpty)
         .toList();
+  }
+
+  Future<_OrderEntry> createOrderFromQuote({
+    required String bearerToken,
+    required String quoteId,
+  }) async {
+    final response = await _apiClient.post(
+      Uri.parse('${AppConfig.baseUrl}/construction/orders/from-quote/$quoteId'),
+      bearerToken: bearerToken,
+    );
+    return _OrderEntry.fromJson(_dataMap(response.body));
   }
 
   Future<List<_DeliveryEntry>> fetchDeliveries(String bearerToken) async {
@@ -101,22 +131,28 @@ class _ConstructionApiService {
     required String categoryId,
     required String productId,
     required double quantity,
-    required String unit,
+    required String unitId,
+    required double estimatedAmount,
     required String deliveryLocation,
     required DateTime requiredDate,
     required String contactNumber,
     required String notes,
   }) async {
+    if (unitId.isEmpty) {
+      throw Exception('Selected material does not have a unit ID.');
+    }
+
     final response = await _apiClient.post(
       _quotesUri,
       bearerToken: bearerToken,
       body: {
-        'categoryId': categoryId,
-        'productId': productId,
+        'categoryId': _apiId(categoryId),
+        'productId': _apiId(productId),
         'quantity': quantity,
-        'unit': unit,
+        'unitId': _apiId(unitId),
+        'estimatedAmount': estimatedAmount,
         'deliveryLocation': deliveryLocation,
-        'requiredDate': _apiDate(requiredDate),
+        'requiredDate': _apiDateTime(requiredDate),
         'contactNumber': contactNumber,
         if (notes.isNotEmpty) 'notes': notes,
       },
@@ -159,8 +195,10 @@ class _ConstructionApiService {
   }
 }
 
-String _apiDate(DateTime date) {
-  return '${date.year.toString().padLeft(4, '0')}-'
-      '${date.month.toString().padLeft(2, '0')}-'
-      '${date.day.toString().padLeft(2, '0')}';
+Object _apiId(String value) {
+  return int.tryParse(value) ?? value;
+}
+
+String _apiDateTime(DateTime date) {
+  return date.toUtc().toIso8601String();
 }

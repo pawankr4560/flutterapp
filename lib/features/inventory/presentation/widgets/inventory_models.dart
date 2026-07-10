@@ -65,7 +65,7 @@ class _MaterialCategory {
   factory _MaterialCategory.fromJson(Map<String, dynamic> json) {
     final name = _asString(json['name']);
     return _MaterialCategory(
-      _asString(json['id']),
+      _asString(json['id'], fallback: _asString(json['categoryIndex'])),
       name,
       _asString(json['subtitle']),
       _categoryIcon(name),
@@ -78,12 +78,39 @@ class _MaterialCategory {
   final IconData icon;
 }
 
+class _ConstructionUnit {
+  const _ConstructionUnit({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  factory _ConstructionUnit.fromJson(Map<String, dynamic> json) {
+    return _ConstructionUnit(
+      id: _asString(json['id'], fallback: _asString(json['unitId'])),
+      code: _asString(json['code']),
+      name: _asString(json['name'], fallback: _asString(json['unitName'])),
+    );
+  }
+
+  final String id;
+  final String code;
+  final String name;
+
+  bool matches(String value) {
+    final normalized = value.trim().toLowerCase();
+    return normalized.isNotEmpty &&
+        (name.toLowerCase() == normalized || code.toLowerCase() == normalized);
+  }
+}
+
 class _MaterialProduct {
   const _MaterialProduct(
     this.id,
     this.name,
     this.categoryId,
     this.category,
+    this.unitId,
     this.unit,
     this.stock,
     this.rate, {
@@ -91,14 +118,53 @@ class _MaterialProduct {
   });
 
   factory _MaterialProduct.fromJson(Map<String, dynamic> json) {
+    final category = _asMap(json['category']);
+    final unit = _asMap(json['unit']);
     return _MaterialProduct(
-      _asString(json['id']),
+      _asString(json['id'], fallback: _asString(json['productId'])),
       _asString(json['name']),
-      _asString(json['categoryId']),
-      _asString(json['categoryName'], fallback: _asString(json['category'])),
-      _asString(json['unit']),
+      _asString(
+        json['categoryId'],
+        fallback: _asString(
+          json['categoryIndex'],
+          fallback: _asString(category['id']),
+        ),
+      ),
+      _asString(
+        json['categoryName'],
+        fallback: _asString(
+          json['category'],
+          fallback: _asString(category['name']),
+        ),
+      ),
+      _asString(
+        json['unitId'],
+        fallback: _asString(
+          json['unitIndex'],
+          fallback: _asString(
+            json['unitID'],
+            fallback: _asString(
+              unit['id'],
+              fallback: _asString(unit['unitIndex']),
+            ),
+          ),
+        ),
+      ),
+      _asString(
+        json['unit'],
+        fallback: _asString(
+          json['unitName'],
+          fallback: _asString(unit['name']),
+        ),
+      ),
       _asString(json['stockStatus'], fallback: _asString(json['stock'])),
-      _asDouble(json['rate']),
+      _asDouble(
+        json['rate'],
+        fallback: _asDouble(
+          json['price'],
+          fallback: _asDouble(json['unitPrice']),
+        ),
+      ),
       grade: _asNullableString(json['grade']),
     );
   }
@@ -113,6 +179,7 @@ class _MaterialProduct {
       name,
       categoryId,
       categoryName,
+      unitId,
       unit,
       stock,
       rate,
@@ -124,6 +191,7 @@ class _MaterialProduct {
   final String name;
   final String categoryId;
   final String category;
+  final String unitId;
   final String unit;
   final String stock;
   final double? rate;
@@ -146,14 +214,22 @@ class _OrderEntry {
 
   factory _OrderEntry.fromJson(Map<String, dynamic> json) {
     final quantity = _asString(json['quantity']);
-    final unit = _asString(json['unit']);
+    final unit = _asString(
+      json['unitName'],
+      fallback: _asString(json['unit']),
+    );
     return _OrderEntry(
-      _asString(json['id']),
+      _asString(json['orderId'], fallback: _asString(json['id'])),
       _asString(json['material'], fallback: _asString(json['productName'])),
       unit.isEmpty ? quantity : '$quantity $unit',
-      _formatAmount(json['amount']),
-      _asString(json['status']),
-      _displayDate(_asString(json['deliveryDate'])),
+      _formatAmount(json['totalAmount'] ?? json['amount']),
+      _asString(json['status'], fallback: 'Placed'),
+      _displayDate(
+        _asString(
+          json['deliveryDate'],
+          fallback: _asString(json['requiredDate']),
+        ),
+      ),
       _asString(
         json['deliveryLocation'],
         fallback: _asString(json['location']),
@@ -206,34 +282,55 @@ class _DeliveryEntry {
 }
 
 class _QuoteRequest {
-  const _QuoteRequest(
-    this.product,
-    this.category,
-    this.quantity,
-    this.location,
-    this.date,
-  );
+  const _QuoteRequest({
+    required this.id,
+    required this.product,
+    required this.category,
+    required this.quantity,
+    required this.location,
+    required this.date,
+    required this.status,
+    required this.estimatedAmount,
+    required this.finalQuotedAmount,
+  });
 
   factory _QuoteRequest.fromJson(Map<String, dynamic> json) {
     final quantity = _asString(json['quantity']);
-    final unit = _asString(json['unit']);
+    final unit = _asString(
+      json['unitName'],
+      fallback: _asString(json['unit']),
+    );
     return _QuoteRequest(
-      _asString(json['productName'], fallback: _asString(json['product'])),
-      _asString(json['categoryName'], fallback: _asString(json['category'])),
-      unit.isEmpty ? quantity : '$quantity $unit',
-      _asString(
+      id: _asString(json['quoteId'], fallback: _asString(json['id'])),
+      product: _asString(
+        json['productName'],
+        fallback: _asString(json['product']),
+      ),
+      category: _asString(
+        json['categoryName'],
+        fallback: _asString(json['category']),
+      ),
+      quantity: unit.isEmpty ? quantity : '$quantity $unit',
+      location: _asString(
         json['deliveryLocation'],
         fallback: _asString(json['location']),
       ),
-      _parseDate(_asString(json['requiredDate'])) ?? DateTime.now(),
+      date: _parseDate(_asString(json['requiredDate'])) ?? DateTime.now(),
+      status: _asString(json['status'], fallback: 'Pending'),
+      estimatedAmount: _asDouble(json['estimatedAmount']) ?? 0,
+      finalQuotedAmount: _asDouble(json['finalQuotedAmount']) ?? 0,
     );
   }
 
+  final String id;
   final String product;
   final String category;
   final String quantity;
   final String location;
   final DateTime date;
+  final String status;
+  final double estimatedAmount;
+  final double finalQuotedAmount;
 }
 
 String _asString(Object? value, {String fallback = ''}) {
@@ -255,16 +352,20 @@ int _asInt(Object? value) {
   return 0;
 }
 
-double? _asDouble(Object? value) {
-  if (value == null) return null;
+double? _asDouble(Object? value, {double? fallback}) {
+  if (value == null) return fallback;
   if (value is double) return value;
   if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value);
-  return null;
+  if (value is String) return double.tryParse(value) ?? fallback;
+  return fallback;
 }
 
 List<dynamic> _asList(Object? value) {
   return value is List<dynamic> ? value : const [];
+}
+
+Map<String, dynamic> _asMap(Object? value) {
+  return value is Map<String, dynamic> ? value : const {};
 }
 
 String _formatAmount(Object? value) {
@@ -282,4 +383,3 @@ String _displayDate(String value) {
   final date = _parseDate(value);
   return date == null ? value : _date(date);
 }
-

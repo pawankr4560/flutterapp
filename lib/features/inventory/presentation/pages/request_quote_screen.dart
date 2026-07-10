@@ -5,6 +5,9 @@ class _RequestQuoteScreen extends StatelessWidget {
     required this.formKey,
     required this.categories,
     required this.products,
+    required this.units,
+    required this.quotes,
+    required this.acceptingQuoteId,
     required this.selectedCategory,
     required this.selectedProduct,
     required this.selectedUnit,
@@ -19,11 +22,15 @@ class _RequestQuoteScreen extends StatelessWidget {
     required this.onDateChanged,
     required this.submitting,
     required this.onSubmit,
+    required this.onAcceptQuote,
   });
 
   final GlobalKey<FormState> formKey;
   final List<_MaterialCategory> categories;
   final List<_MaterialProduct> products;
+  final List<_ConstructionUnit> units;
+  final List<_QuoteRequest> quotes;
+  final String? acceptingQuoteId;
   final String selectedCategory;
   final String selectedProduct;
   final String selectedUnit;
@@ -38,6 +45,7 @@ class _RequestQuoteScreen extends StatelessWidget {
   final ValueChanged<DateTime> onDateChanged;
   final bool submitting;
   final VoidCallback onSubmit;
+  final ValueChanged<_QuoteRequest> onAcceptQuote;
 
   @override
   Widget build(BuildContext context) {
@@ -63,20 +71,10 @@ class _RequestQuoteScreen extends StatelessWidget {
         : selected.rate! * quantity;
     final unitOptions = <String>{
       selectedUnit,
-      selected.unit,
-      for (final product in categoryProducts) product.unit,
-      'Bag',
-      'Ton',
-      'CFT',
-      'Cubic Meter',
-      '1000 pcs',
-      'pcs',
-      'Pieces',
-      'Kilogram',
-      'Gram',
-      'Litre',
-      'Millilitre',
-      'Tractor / Ton / CFT',
+      for (final unit in units) unit.name,
+      if (units.isEmpty) selected.unit,
+      if (units.isEmpty)
+        for (final product in categoryProducts) product.unit,
     }.where((unit) => unit.isNotEmpty).toList();
 
     return Form(
@@ -158,6 +156,20 @@ class _RequestQuoteScreen extends StatelessWidget {
                 : const Icon(Icons.send_rounded),
             label: Text(submitting ? 'Submitting...' : 'Submit Request'),
           ),
+          const SizedBox(height: AppSpacing.xl),
+          const _SectionHeader(title: 'Recent Quotes'),
+          const SizedBox(height: AppSpacing.sm),
+          if (quotes.isEmpty)
+            const _EmptyConstructionMessage(message: 'No quotes found')
+          else
+            for (final quote in quotes.take(5)) ...[
+              _QuoteCard(
+                quote: quote,
+                accepting: acceptingQuoteId == quote.id,
+                onAccept: () => onAcceptQuote(quote),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
         ],
       ),
     );
