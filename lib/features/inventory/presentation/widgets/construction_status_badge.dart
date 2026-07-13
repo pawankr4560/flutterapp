@@ -7,9 +7,10 @@ class ConstructionStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (label.toLowerCase()) {
+    final color = switch (_statusKey(label)) {
       'pending' => AppColors.warning,
-      'confirmed' || 'out for delivery' || 'loading' => AppColors.textSecondary,
+      'confirmed' || 'processing' || 'loading' => AppColors.textSecondary,
+      'placed' || 'shipped' || 'outfordelivery' => AppColors.accentDark,
       'delivered' || 'available' => AppColors.success,
       'cancelled' => AppColors.error,
       _ => AppColors.accentDark,
@@ -24,11 +25,35 @@ class ConstructionStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
-        label,
+        _statusLabel(label),
         style: AppTextStyles.bodySmall(
           context,
         ).copyWith(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
+}
+
+String _statusKey(String value) {
+  return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+}
+
+String _statusLabel(String value) {
+  final normalized = value
+      .replaceAll('_', ' ')
+      .replaceAll('-', ' ')
+      .replaceAllMapped(
+        RegExp(r'([a-z0-9])([A-Z])'),
+        (match) => '${match.group(1)} ${match.group(2)}',
+      )
+      .trim();
+  if (normalized.isEmpty) return 'Unknown';
+  return normalized
+      .split(RegExp(r'\s+'))
+      .map(
+        (word) => word.isEmpty
+            ? word
+            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
+      .join(' ');
 }

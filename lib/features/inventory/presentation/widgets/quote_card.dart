@@ -16,14 +16,16 @@ class _QuoteCard extends StatelessWidget {
     final finalAmount = quote.finalQuotedAmount > 0
         ? 'Final: ${_money(quote.finalQuotedAmount)}'
         : 'Awaiting final price';
-    final status = quote.status.toLowerCase();
+    final status = _statusKey(quote.status);
     final canAccept =
         quote.finalQuotedAmount > 0 &&
         !{
           'accepted',
-          'order placed',
+          'orderplaced',
+          'convertedtoorder',
           'ordered',
           'placed',
+          'completed',
           'rejected',
           'expired',
           'cancelled',

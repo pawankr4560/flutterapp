@@ -63,11 +63,20 @@ class _MaterialCategory {
   const _MaterialCategory(this.id, this.name, this.subtitle, this.icon);
 
   factory _MaterialCategory.fromJson(Map<String, dynamic> json) {
-    final name = _asString(json['name']);
+    final name = _asString(
+      json['name'],
+      fallback: _asString(json['categoryName']),
+    );
     return _MaterialCategory(
-      _asString(json['id'], fallback: _asString(json['categoryIndex'])),
+      _asString(
+        json['id'],
+        fallback: _asString(
+          json['categoryId'],
+          fallback: _asString(json['categoryIndex']),
+        ),
+      ),
       name,
-      _asString(json['subtitle']),
+      _asString(json['subtitle'], fallback: _asString(json['description'])),
       _categoryIcon(name),
     );
   }
@@ -87,8 +96,14 @@ class _ConstructionUnit {
 
   factory _ConstructionUnit.fromJson(Map<String, dynamic> json) {
     return _ConstructionUnit(
-      id: _asString(json['id'], fallback: _asString(json['unitId'])),
-      code: _asString(json['code']),
+      id: _asString(
+        json['id'],
+        fallback: _asString(
+          json['unitId'],
+          fallback: _asString(json['unitIndex']),
+        ),
+      ),
+      code: _asString(json['code'], fallback: _asString(json['unitCode'])),
       name: _asString(json['name'], fallback: _asString(json['unitName'])),
     );
   }
@@ -121,8 +136,14 @@ class _MaterialProduct {
     final category = _asMap(json['category']);
     final unit = _asMap(json['unit']);
     return _MaterialProduct(
-      _asString(json['id'], fallback: _asString(json['productId'])),
-      _asString(json['name']),
+      _asString(
+        json['id'],
+        fallback: _asString(
+          json['productId'],
+          fallback: _asString(json['productIndex']),
+        ),
+      ),
+      _asString(json['name'], fallback: _asString(json['productName'])),
       _asString(
         json['categoryId'],
         fallback: _asString(
@@ -213,17 +234,33 @@ class _OrderEntry {
   );
 
   factory _OrderEntry.fromJson(Map<String, dynamic> json) {
+    final product = _asMap(json['product']);
+    final unitData = _asMap(json['unit']);
     final quantity = _asString(json['quantity']);
     final unit = _asString(
       json['unitName'],
-      fallback: _asString(json['unit']),
+      fallback: _asString(json['unit'], fallback: _asString(unitData['name'])),
     );
     return _OrderEntry(
-      _asString(json['orderId'], fallback: _asString(json['id'])),
-      _asString(json['material'], fallback: _asString(json['productName'])),
+      _asString(
+        json['orderId'],
+        fallback: _asString(
+          json['id'],
+          fallback: _asString(json['orderIndex']),
+        ),
+      ),
+      _asString(
+        json['material'],
+        fallback: _asString(
+          json['productName'],
+          fallback: _asString(product['name']),
+        ),
+      ),
       unit.isEmpty ? quantity : '$quantity $unit',
-      _formatAmount(json['totalAmount'] ?? json['amount']),
-      _asString(json['status'], fallback: 'Placed'),
+      _formatAmount(
+        json['totalAmount'] ?? json['amount'] ?? json['finalAmount'],
+      ),
+      _constructionOrderStatus(json['status']),
       _displayDate(
         _asString(
           json['deliveryDate'],
@@ -258,17 +295,44 @@ class _DeliveryEntry {
   );
 
   factory _DeliveryEntry.fromJson(Map<String, dynamic> json) {
+    final product = _asMap(json['product']);
+    final rawProgress = _asDouble(
+      json['progress'],
+      fallback: _asDouble(json['progressPercentage']),
+    );
+    final progress = rawProgress == null
+        ? 0.0
+        : (rawProgress > 1 ? rawProgress / 100 : rawProgress)
+              .clamp(0, 1)
+              .toDouble();
     return _DeliveryEntry(
-      _asString(json['id']),
-      _asString(json['material'], fallback: _asString(json['productName'])),
       _asString(
-        json['vehicleNumber'],
-        fallback: _asString(json['vehicle']),
+        json['id'],
+        fallback: _asString(
+          json['deliveryId'],
+          fallback: _asString(json['deliveryIndex']),
+        ),
       ),
+      _asString(
+        json['material'],
+        fallback: _asString(
+          json['productName'],
+          fallback: _asString(product['name']),
+        ),
+      ),
+      _asString(json['vehicleNumber'], fallback: _asString(json['vehicle'])),
       _asString(json['driverName'], fallback: _asString(json['driver'])),
       _asString(json['status']),
-      _asString(json['eta']),
-      _asDouble(json['progress'])?.clamp(0, 1).toDouble() ?? 0,
+      _asString(
+        json['eta'],
+        fallback: _displayDate(
+          _asString(
+            json['estimatedDeliveryDate'],
+            fallback: _asString(json['deliveryDate']),
+          ),
+        ),
+      ),
+      progress,
     );
   }
 
@@ -295,20 +359,35 @@ class _QuoteRequest {
   });
 
   factory _QuoteRequest.fromJson(Map<String, dynamic> json) {
+    final product = _asMap(json['product']);
+    final category = _asMap(json['category']);
+    final unitData = _asMap(json['unit']);
     final quantity = _asString(json['quantity']);
     final unit = _asString(
       json['unitName'],
-      fallback: _asString(json['unit']),
+      fallback: _asString(json['unit'], fallback: _asString(unitData['name'])),
     );
     return _QuoteRequest(
-      id: _asString(json['quoteId'], fallback: _asString(json['id'])),
+      id: _asString(
+        json['quoteId'],
+        fallback: _asString(
+          json['id'],
+          fallback: _asString(json['quoteIndex']),
+        ),
+      ),
       product: _asString(
         json['productName'],
-        fallback: _asString(json['product']),
+        fallback: _asString(
+          json['product'],
+          fallback: _asString(product['name']),
+        ),
       ),
       category: _asString(
         json['categoryName'],
-        fallback: _asString(json['category']),
+        fallback: _asString(
+          json['category'],
+          fallback: _asString(category['name']),
+        ),
       ),
       quantity: unit.isEmpty ? quantity : '$quantity $unit',
       location: _asString(
@@ -318,7 +397,18 @@ class _QuoteRequest {
       date: _parseDate(_asString(json['requiredDate'])) ?? DateTime.now(),
       status: _asString(json['status'], fallback: 'Pending'),
       estimatedAmount: _asDouble(json['estimatedAmount']) ?? 0,
-      finalQuotedAmount: _asDouble(json['finalQuotedAmount']) ?? 0,
+      finalQuotedAmount:
+          _asDouble(
+            json['finalQuotedAmount'],
+            fallback: _asDouble(
+              json['quotedAmount'],
+              fallback: _asDouble(
+                json['quotedPrice'],
+                fallback: _asDouble(json['finalPrice']),
+              ),
+            ),
+          ) ??
+          0,
     );
   }
 
@@ -372,6 +462,30 @@ String _formatAmount(Object? value) {
   final amount = _asDouble(value);
   if (amount != null) return _money(amount);
   return _asString(value);
+}
+
+String _constructionOrderStatus(Object? value) {
+  final numericStatus = switch (value) {
+    int number => number,
+    num number => number.toInt(),
+    String text => int.tryParse(text.trim()),
+    _ => null,
+  };
+
+  if (numericStatus != null) {
+    return switch (numericStatus) {
+      0 => 'Placed',
+      1 => 'Confirmed',
+      2 => 'Processing',
+      3 => 'Shipped',
+      4 => 'Delivered',
+      5 => 'Cancelled',
+      _ => 'Unknown',
+    };
+  }
+
+  final status = _asString(value).trim();
+  return status.isEmpty ? 'Placed' : status;
 }
 
 DateTime? _parseDate(String value) {

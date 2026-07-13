@@ -45,13 +45,13 @@ class AuthSession extends ChangeNotifier {
   String get profileImageUrl => _profileImageUrl ?? '';
 
   Future<void> initialize() async {
-    _userId = await _storage.read(key: _userIdKey);
-    _bearerToken = await _storage.read(key: _bearerTokenKey);
-    _userName = await _storage.read(key: _userNameKey);
-    _email = await _storage.read(key: _emailKey);
-    _phone = await _storage.read(key: _phoneKey);
-    _address = await _storage.read(key: _addressKey);
-    _profileImageUrl = await _storage.read(key: _profileImageUrlKey);
+    _userId = await _readStorage(_userIdKey);
+    _bearerToken = await _readStorage(_bearerTokenKey);
+    _userName = await _readStorage(_userNameKey);
+    _email = await _readStorage(_emailKey);
+    _phone = await _readStorage(_phoneKey);
+    _address = await _readStorage(_addressKey);
+    _profileImageUrl = await _readStorage(_profileImageUrlKey);
     notifyListeners();
   }
 
@@ -72,16 +72,18 @@ class AuthSession extends ChangeNotifier {
     _address = address;
     _profileImageUrl = profileImageUrl;
 
-    await Future.wait([
-      _storage.write(key: _userIdKey, value: userId),
-      _storage.write(key: _bearerTokenKey, value: bearerToken),
-      if (userName != null) _storage.write(key: _userNameKey, value: userName),
-      if (email != null) _storage.write(key: _emailKey, value: email),
-      if (phone != null) _storage.write(key: _phoneKey, value: phone),
-      if (address != null) _storage.write(key: _addressKey, value: address),
-      if (profileImageUrl != null)
-        _storage.write(key: _profileImageUrlKey, value: profileImageUrl),
-    ]);
+    // Web secure storage initializes its encryption key lazily. Serial writes
+    // prevent first-login calls from racing and encrypting values with
+    // different keys.
+    await _writeStorage(_userIdKey, userId);
+    await _writeStorage(_bearerTokenKey, bearerToken);
+    if (userName != null) await _writeStorage(_userNameKey, userName);
+    if (email != null) await _writeStorage(_emailKey, email);
+    if (phone != null) await _writeStorage(_phoneKey, phone);
+    if (address != null) await _writeStorage(_addressKey, address);
+    if (profileImageUrl != null) {
+      await _writeStorage(_profileImageUrlKey, profileImageUrl);
+    }
 
     notifyListeners();
   }
@@ -99,14 +101,13 @@ class AuthSession extends ChangeNotifier {
     _address = address ?? _address;
     _profileImageUrl = profileImageUrl ?? _profileImageUrl;
 
-    await Future.wait([
-      if (userName != null) _storage.write(key: _userNameKey, value: userName),
-      if (email != null) _storage.write(key: _emailKey, value: email),
-      if (phone != null) _storage.write(key: _phoneKey, value: phone),
-      if (address != null) _storage.write(key: _addressKey, value: address),
-      if (profileImageUrl != null)
-        _storage.write(key: _profileImageUrlKey, value: profileImageUrl),
-    ]);
+    if (userName != null) await _writeStorage(_userNameKey, userName);
+    if (email != null) await _writeStorage(_emailKey, email);
+    if (phone != null) await _writeStorage(_phoneKey, phone);
+    if (address != null) await _writeStorage(_addressKey, address);
+    if (profileImageUrl != null) {
+      await _writeStorage(_profileImageUrlKey, profileImageUrl);
+    }
 
     notifyListeners();
   }
@@ -210,15 +211,13 @@ class AuthSession extends ChangeNotifier {
     _address = null;
     _profileImageUrl = null;
 
-    await Future.wait([
-      _storage.delete(key: _userIdKey),
-      _storage.delete(key: _bearerTokenKey),
-      _storage.delete(key: _userNameKey),
-      _storage.delete(key: _emailKey),
-      _storage.delete(key: _phoneKey),
-      _storage.delete(key: _addressKey),
-      _storage.delete(key: _profileImageUrlKey),
-    ]);
+    await _deleteStorage(_userIdKey);
+    await _deleteStorage(_bearerTokenKey);
+    await _deleteStorage(_userNameKey);
+    await _deleteStorage(_emailKey);
+    await _deleteStorage(_phoneKey);
+    await _deleteStorage(_addressKey);
+    await _deleteStorage(_profileImageUrlKey);
 
     notifyListeners();
   }
@@ -266,6 +265,58 @@ class AuthSession extends ChangeNotifier {
 
     return parts.isEmpty ? null : parts.join(' ');
   }
+
+  Future<String?> _readStorage(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } catch (error, stackTrace) {
+      if (!kIsWeb) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      await _resetCorruptedWebStorage(error);
+      return null;
+    }
+  }
+
+  Future<void> _writeStorage(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } catch (error, stackTrace) {
+      if (!kIsWeb) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      await _resetCorruptedWebStorage(error);
+      try {
+        await _storage.write(key: key, value: value);
+      } catch (retryError) {
+        if (kDebugMode) {
+          debugPrint('Unable to persist the web auth session: $retryError');
+        }
+      }
+    }
+  }
+
+  Future<void> _deleteStorage(String key) async {
+    try {
+      await _storage.delete(key: key);
+    } catch (error, stackTrace) {
+      if (!kIsWeb) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      if (kDebugMode) {
+        debugPrint('Unable to delete web auth storage: $error');
+      }
+    }
+  }
+
+  Future<void> _resetCorruptedWebStorage(Object error) async {
+    if (kDebugMode) {
+      debugPrint('Resetting unreadable web secure storage: $error');
+    }
+    try {
+      await _storage.deleteAll();
+    } catch (_) {
+      // The in-memory session remains usable when browser storage is blocked.
+    }
+  }
 }
-
-

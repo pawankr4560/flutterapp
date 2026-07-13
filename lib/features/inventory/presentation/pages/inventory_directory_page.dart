@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -42,7 +43,10 @@ class InventoryDirectoryPage extends StatefulWidget {
   State<InventoryDirectoryPage> createState() => _InventoryDirectoryPageState();
 }
 
-class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
+class _InventoryDirectoryPageState extends State<InventoryDirectoryPage>
+    with WidgetsBindingObserver {
+  static const _quoteRefreshInterval = Duration(seconds: 10);
+
   int _tabIndex = 0;
   String _selectedCategory = 'Cement';
   String _quoteCategory = 'Cement';
@@ -59,6 +63,8 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   final _service = _ConstructionApiService();
   var _loading = true;
   var _submittingQuote = false;
+  var _refreshingQuoteStatus = false;
+  Timer? _quoteRefreshTimer;
   String? _acceptingQuoteId;
   String? _errorMessage;
 
@@ -73,11 +79,25 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _quoteRefreshTimer = Timer.periodic(
+      _quoteRefreshInterval,
+      (_) => unawaited(_refreshQuoteStatus()),
+    );
     _loadConstructionData();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshQuoteStatus());
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _quoteRefreshTimer?.cancel();
     _quantityController.dispose();
     _locationController.dispose();
     _phoneController.dispose();
@@ -104,9 +124,9 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
             children: [
               Text(
                 _titleForTab,
-                style: AppTextStyles.titleMedium(context).copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style: AppTextStyles.titleMedium(
+                  context,
+                ).copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
               if (_tabIndex == 0)
                 Text(
@@ -121,9 +141,7 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
         body: SafeArea(child: body),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tabIndex,
-          onDestinationSelected: navDisabled
-              ? null
-              : (value) => setState(() => _tabIndex = value),
+          onDestinationSelected: navDisabled ? null : _selectTab,
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.dashboard_outlined),
@@ -175,10 +193,10 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       _ConstructionDashboard(
         dashboard: _dashboard,
         categories: _categories,
-        onBrowse: () => setState(() => _tabIndex = 1),
-        onQuote: () => setState(() => _tabIndex = 2),
-        onOrders: () => setState(() => _tabIndex = 3),
-        onDelivery: () => setState(() => _tabIndex = 4),
+        onBrowse: () => _selectTab(1),
+        onQuote: () => _selectTab(2),
+        onOrders: () => _selectTab(3),
+        onDelivery: () => _selectTab(4),
         onCategoryTap: (category) {
           setState(() {
             _selectedCategory = category;
@@ -263,6 +281,13 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     });
   }
 
+  void _selectTab(int value) {
+    setState(() => _tabIndex = value);
+    if (value == 2 || value == 3) {
+      unawaited(_refreshQuoteStatus());
+    }
+  }
+
   void _setQuoteProduct(String productName) {
     final product = _firstOrNull(
       _products.where((item) => item.name == productName),
@@ -308,9 +333,9 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       await _refreshDashboardAndOrders();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
       setState(() => _submittingQuote = false);
     }
   }
@@ -335,9 +360,9 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
       });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyError(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
       setState(() => _acceptingQuoteId = null);
     }
   }
@@ -425,9 +450,36 @@ class _InventoryDirectoryPageState extends State<InventoryDirectoryPage> {
     }
   }
 
+  Future<void> _refreshQuoteStatus() async {
+    if (_loading || _refreshingQuoteStatus || !mounted) return;
+    final token = AuthSession.instance.bearerToken;
+    if (token.isEmpty) return;
+
+    _refreshingQuoteStatus = true;
+    try {
+      final results = await Future.wait([
+        _service.fetchQuotes(token),
+        _service.fetchOrders(token),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _quotes
+          ..clear()
+          ..addAll(results[0] as List<_QuoteRequest>);
+        _orders = results[1] as List<_OrderEntry>;
+      });
+    } catch (_) {
+      // Background refresh failures should not interrupt the active screen.
+    } finally {
+      _refreshingQuoteStatus = false;
+    }
+  }
+
   String _friendlyError(Object error) {
     final message = error.toString().replaceFirst('Exception: ', '');
-    return message.isEmpty ? 'Something went wrong. Please try again.' : message;
+    return message.isEmpty
+        ? 'Something went wrong. Please try again.'
+        : message;
   }
 
   _MaterialProduct get _selectedQuoteProduct {
@@ -478,4 +530,3 @@ T? _firstOrNull<T>(Iterable<T> values) {
   final iterator = values.iterator;
   return iterator.moveNext() ? iterator.current : null;
 }
-
