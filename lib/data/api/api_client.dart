@@ -151,7 +151,7 @@ class ApiClient {
         return null;
       }
 
-      for (final key in const ['message', 'error', 'title']) {
+      for (final key in const ['errorMessage', 'message', 'error', 'title']) {
         final value = jsonBody[key];
         if (value is String && value.isNotEmpty) {
           return value;

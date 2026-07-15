@@ -5,7 +5,6 @@ class _ConstructionDashboard extends StatelessWidget {
     required this.dashboard,
     required this.categories,
     required this.onBrowse,
-    required this.onQuote,
     required this.onOrders,
     required this.onDelivery,
     required this.onCategoryTap,
@@ -14,7 +13,6 @@ class _ConstructionDashboard extends StatelessWidget {
   final _ConstructionDashboardData dashboard;
   final List<_MaterialCategory> categories;
   final VoidCallback onBrowse;
-  final VoidCallback onQuote;
   final VoidCallback onOrders;
   final VoidCallback onDelivery;
   final ValueChanged<String> onCategoryTap;
@@ -26,7 +24,7 @@ class _ConstructionDashboard extends StatelessWidget {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth > 560 ? 4 : 2;
+            final columns = constraints.maxWidth > 560 ? 3 : 2;
             return GridView.count(
               crossAxisCount: columns,
               crossAxisSpacing: AppSpacing.sm,
@@ -39,11 +37,6 @@ class _ConstructionDashboard extends StatelessWidget {
                   title: 'Total Products',
                   value: dashboard.totalProducts.toString(),
                   icon: Icons.inventory_2_rounded,
-                ),
-                ConstructionSummaryCard(
-                  title: 'Pending Quotes',
-                  value: dashboard.pendingQuotes.toString(),
-                  icon: Icons.request_quote_rounded,
                 ),
                 ConstructionSummaryCard(
                   title: 'Active Orders',
@@ -64,7 +57,7 @@ class _ConstructionDashboard extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth > 560 ? 4 : 2;
+            final columns = constraints.maxWidth > 560 ? 3 : 2;
             return GridView.count(
               crossAxisCount: columns,
               crossAxisSpacing: AppSpacing.sm,
@@ -77,11 +70,6 @@ class _ConstructionDashboard extends StatelessWidget {
                   title: 'Browse Materials',
                   icon: Icons.warehouse_rounded,
                   onTap: onBrowse,
-                ),
-                ConstructionQuickActionCard(
-                  title: 'Request Quote',
-                  icon: Icons.request_quote_rounded,
-                  onTap: onQuote,
                 ),
                 ConstructionQuickActionCard(
                   title: 'My Orders',
@@ -139,7 +127,6 @@ class _ConstructionDashboard extends StatelessWidget {
 
 IconData _activityIcon(String type) {
   return switch (type.toUpperCase()) {
-    'QUOTE' => Icons.request_quote_rounded,
     'ORDER' => Icons.check_circle_rounded,
     'DELIVERY' => Icons.local_shipping_rounded,
     _ => Icons.info_rounded,

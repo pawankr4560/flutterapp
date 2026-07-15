@@ -35,6 +35,7 @@ class AppFormTextField extends StatelessWidget {
     this.requiredMessage = 'Required',
     this.validatePositiveNumber = false,
     this.positiveNumberMessage = 'Enter a valid value',
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -47,6 +48,7 @@ class AppFormTextField extends StatelessWidget {
   final String requiredMessage;
   final bool validatePositiveNumber;
   final String positiveNumberMessage;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,7 @@ class AppFormTextField extends StatelessWidget {
         maxLines: maxLines ?? 1,
         decoration: InputDecoration(labelText: label),
         validator: validator ?? _defaultValidator,
+        onChanged: onChanged,
       ),
     );
   }

@@ -44,6 +44,35 @@ void main() {
     );
   });
 
+  test('uses errorMessage from API error envelope', () async {
+    final client = ApiClient(
+      client: _FakeHttpClient(
+        (request) async => _response(
+          jsonEncode({
+            'success': false,
+            'message': null,
+            'errorMessage': 'An order has already been placed for this quote.',
+            'data': null,
+          }),
+          statusCode: 400,
+        ),
+      ),
+    );
+
+    await expectLater(
+      client.post(Uri.parse('https://example.test/orders/from-quote/1')),
+      throwsA(
+        isA<ApiException>()
+            .having(
+              (error) => error.message,
+              'message',
+              'An order has already been placed for this quote.',
+            )
+            .having((error) => error.statusCode, 'statusCode', 400),
+      ),
+    );
+  });
+
   test('throws ApiException when the request times out', () async {
     final client = ApiClient(
       timeout: const Duration(milliseconds: 1),

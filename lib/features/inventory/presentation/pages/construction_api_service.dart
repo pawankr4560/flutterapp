@@ -12,8 +12,6 @@ class _ConstructionApiService {
       Uri.parse('${AppConfig.baseUrl}/construction/categories');
   Uri get _productsUri =>
       Uri.parse('${AppConfig.baseUrl}/construction/products');
-  Uri get _unitsUri => Uri.parse('${AppConfig.baseUrl}/construction/units');
-  Uri get _quotesUri => Uri.parse('${AppConfig.baseUrl}/construction/quotes');
   Uri get _ordersUri => Uri.parse('${AppConfig.baseUrl}/construction/orders');
   Uri get _deliveriesUri =>
       Uri.parse('${AppConfig.baseUrl}/construction/deliveries');
@@ -112,24 +110,6 @@ class _ConstructionApiService {
     return products;
   }
 
-  Future<List<_ConstructionUnit>> fetchUnits(String bearerToken) async {
-    final response = await _apiClient.get(_unitsUri, bearerToken: bearerToken);
-    return _dataList(response.body)
-        .whereType<Map<String, dynamic>>()
-        .map(_ConstructionUnit.fromJson)
-        .where((unit) => unit.id.isNotEmpty && unit.name.isNotEmpty)
-        .toList();
-  }
-
-  Future<List<_QuoteRequest>> fetchQuotes(String bearerToken) async {
-    final response = await _apiClient.get(_quotesUri, bearerToken: bearerToken);
-    return _dataList(response.body)
-        .whereType<Map<String, dynamic>>()
-        .map(_QuoteRequest.fromJson)
-        .where((quote) => quote.id.isNotEmpty)
-        .toList();
-  }
-
   Future<List<_OrderEntry>> fetchOrders(String bearerToken) async {
     final response = await _apiClient.get(_ordersUri, bearerToken: bearerToken);
     final items = _itemsList(response.body);
@@ -140,13 +120,32 @@ class _ConstructionApiService {
         .toList();
   }
 
-  Future<_OrderEntry> createOrderFromQuote({
+  Future<_OrderEntry> createOrder({
     required String bearerToken,
-    required String quoteId,
+    required String categoryId,
+    required String productId,
+    required double quantity,
+    required double price,
+    required String unitId,
+    required String deliveryLocation,
+    required DateTime requiredDate,
+    required String contactNumber,
+    required String notes,
   }) async {
     final response = await _apiClient.post(
-      Uri.parse('${AppConfig.baseUrl}/construction/orders/from-quote/$quoteId'),
+      _ordersUri,
       bearerToken: bearerToken,
+      body: {
+        'categoryId': _apiId(categoryId),
+        'productId': _apiId(productId),
+        'quantity': quantity,
+        'price': price,
+        'unitId': _apiId(unitId),
+        'deliveryLocation': deliveryLocation,
+        'requiredDate': _apiDateTime(requiredDate),
+        'contactNumber': contactNumber,
+        if (notes.isNotEmpty) 'notes': notes,
+      },
     );
     return _OrderEntry.fromJson(_dataMap(response.body));
   }
@@ -161,40 +160,6 @@ class _ConstructionApiService {
         .map(_DeliveryEntry.fromJson)
         .where((delivery) => delivery.id.isNotEmpty)
         .toList();
-  }
-
-  Future<_QuoteRequest> createQuote({
-    required String bearerToken,
-    required String categoryId,
-    required String productId,
-    required double quantity,
-    required String unitId,
-    required double estimatedAmount,
-    required String deliveryLocation,
-    required DateTime requiredDate,
-    required String contactNumber,
-    required String notes,
-  }) async {
-    if (unitId.isEmpty) {
-      throw Exception('Selected material does not have a unit ID.');
-    }
-
-    final response = await _apiClient.post(
-      _quotesUri,
-      bearerToken: bearerToken,
-      body: {
-        'categoryId': _apiId(categoryId),
-        'productId': _apiId(productId),
-        'quantity': quantity,
-        'unitId': _apiId(unitId),
-        'estimatedAmount': estimatedAmount,
-        'deliveryLocation': deliveryLocation,
-        'requiredDate': _apiDateTime(requiredDate),
-        'contactNumber': contactNumber,
-        if (notes.isNotEmpty) 'notes': notes,
-      },
-    );
-    return _QuoteRequest.fromJson(_dataMap(response.body));
   }
 
   Map<String, dynamic> _dataMap(String body) {
@@ -224,7 +189,6 @@ class _ConstructionApiService {
       'products',
       'categories',
       'units',
-      'quotes',
       'orders',
       'deliveries',
     ]) {

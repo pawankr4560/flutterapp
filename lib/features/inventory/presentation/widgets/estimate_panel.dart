@@ -1,10 +1,10 @@
 part of '../pages/inventory_directory_page.dart';
 
 class _EstimatePanel extends StatelessWidget {
-  const _EstimatePanel({required this.amount, required this.quoteOnly});
+  const _EstimatePanel({required this.amount, required this.priceUnavailable});
 
   final double? amount;
-  final bool quoteOnly;
+  final bool priceUnavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +12,16 @@ class _EstimatePanel extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            quoteOnly ? Icons.info_outline_rounded : Icons.payments_rounded,
+            priceUnavailable
+                ? Icons.info_outline_rounded
+                : Icons.payments_rounded,
             color: AppColors.accentDark,
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              quoteOnly
-                  ? 'Final price will be shared after supplier confirmation'
+              priceUnavailable
+                  ? 'The final amount will be calculated when the order is placed'
                   : 'Estimated amount: ${_money(amount ?? 0)}',
               style: AppTextStyles.titleMedium(context),
             ),

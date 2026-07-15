@@ -3,7 +3,6 @@ part of '../pages/inventory_directory_page.dart';
 class _ConstructionDashboardData {
   const _ConstructionDashboardData({
     this.totalProducts = 0,
-    this.pendingQuotes = 0,
     this.activeOrders = 0,
     this.deliveriesToday = 0,
     this.recentActivities = const [],
@@ -12,7 +11,6 @@ class _ConstructionDashboardData {
   factory _ConstructionDashboardData.fromJson(Map<String, dynamic> json) {
     return _ConstructionDashboardData(
       totalProducts: _asInt(json['totalProducts']),
-      pendingQuotes: _asInt(json['pendingQuotes']),
       activeOrders: _asInt(json['activeOrders']),
       deliveriesToday: _asInt(json['deliveriesToday']),
       recentActivities: _asList(json['recentActivities'])
@@ -24,7 +22,6 @@ class _ConstructionDashboardData {
   }
 
   final int totalProducts;
-  final int pendingQuotes;
   final int activeOrders;
   final int deliveriesToday;
   final List<_ActivityEntry> recentActivities;
@@ -85,38 +82,6 @@ class _MaterialCategory {
   final String name;
   final String subtitle;
   final IconData icon;
-}
-
-class _ConstructionUnit {
-  const _ConstructionUnit({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
-
-  factory _ConstructionUnit.fromJson(Map<String, dynamic> json) {
-    return _ConstructionUnit(
-      id: _asString(
-        json['id'],
-        fallback: _asString(
-          json['unitId'],
-          fallback: _asString(json['unitIndex']),
-        ),
-      ),
-      code: _asString(json['code'], fallback: _asString(json['unitCode'])),
-      name: _asString(json['name'], fallback: _asString(json['unitName'])),
-    );
-  }
-
-  final String id;
-  final String code;
-  final String name;
-
-  bool matches(String value) {
-    final normalized = value.trim().toLowerCase();
-    return normalized.isNotEmpty &&
-        (name.toLowerCase() == normalized || code.toLowerCase() == normalized);
-  }
 }
 
 class _MaterialProduct {
@@ -219,7 +184,7 @@ class _MaterialProduct {
   final String? grade;
 
   String get priceText =>
-      rate == null ? 'Request Quote' : '${_money(rate!)} / $unit';
+      rate == null ? 'Price unavailable' : '${_money(rate!)} / $unit';
 }
 
 class _OrderEntry {
@@ -343,84 +308,6 @@ class _DeliveryEntry {
   final String status;
   final String eta;
   final double progress;
-}
-
-class _QuoteRequest {
-  const _QuoteRequest({
-    required this.id,
-    required this.product,
-    required this.category,
-    required this.quantity,
-    required this.location,
-    required this.date,
-    required this.status,
-    required this.estimatedAmount,
-    required this.finalQuotedAmount,
-  });
-
-  factory _QuoteRequest.fromJson(Map<String, dynamic> json) {
-    final product = _asMap(json['product']);
-    final category = _asMap(json['category']);
-    final unitData = _asMap(json['unit']);
-    final quantity = _asString(json['quantity']);
-    final unit = _asString(
-      json['unitName'],
-      fallback: _asString(json['unit'], fallback: _asString(unitData['name'])),
-    );
-    return _QuoteRequest(
-      id: _asString(
-        json['quoteId'],
-        fallback: _asString(
-          json['id'],
-          fallback: _asString(json['quoteIndex']),
-        ),
-      ),
-      product: _asString(
-        json['productName'],
-        fallback: _asString(
-          json['product'],
-          fallback: _asString(product['name']),
-        ),
-      ),
-      category: _asString(
-        json['categoryName'],
-        fallback: _asString(
-          json['category'],
-          fallback: _asString(category['name']),
-        ),
-      ),
-      quantity: unit.isEmpty ? quantity : '$quantity $unit',
-      location: _asString(
-        json['deliveryLocation'],
-        fallback: _asString(json['location']),
-      ),
-      date: _parseDate(_asString(json['requiredDate'])) ?? DateTime.now(),
-      status: _asString(json['status'], fallback: 'Pending'),
-      estimatedAmount: _asDouble(json['estimatedAmount']) ?? 0,
-      finalQuotedAmount:
-          _asDouble(
-            json['finalQuotedAmount'],
-            fallback: _asDouble(
-              json['quotedAmount'],
-              fallback: _asDouble(
-                json['quotedPrice'],
-                fallback: _asDouble(json['finalPrice']),
-              ),
-            ),
-          ) ??
-          0,
-    );
-  }
-
-  final String id;
-  final String product;
-  final String category;
-  final String quantity;
-  final String location;
-  final DateTime date;
-  final String status;
-  final double estimatedAmount;
-  final double finalQuotedAmount;
 }
 
 String _asString(Object? value, {String fallback = ''}) {

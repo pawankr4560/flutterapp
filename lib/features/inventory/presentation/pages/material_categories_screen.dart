@@ -6,7 +6,6 @@ class _MaterialCategoriesScreen extends StatelessWidget {
     required this.selectedCategory,
     required this.products,
     required this.onCategorySelected,
-    required this.onQuote,
     required this.onOrder,
   });
 
@@ -14,7 +13,6 @@ class _MaterialCategoriesScreen extends StatelessWidget {
   final String selectedCategory;
   final List<_MaterialProduct> products;
   final ValueChanged<String> onCategorySelected;
-  final ValueChanged<_MaterialProduct> onQuote;
   final ValueChanged<_MaterialProduct> onOrder;
 
   @override
@@ -63,7 +61,6 @@ class _MaterialCategoriesScreen extends StatelessWidget {
           for (final product in products) ...[
             _MaterialCard(
               product: product,
-              onQuote: () => onQuote(product),
               onOrder: () => onOrder(product),
             ),
             const SizedBox(height: AppSpacing.sm),

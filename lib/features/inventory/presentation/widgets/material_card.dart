@@ -3,12 +3,10 @@ part of '../pages/inventory_directory_page.dart';
 class _MaterialCard extends StatelessWidget {
   const _MaterialCard({
     required this.product,
-    required this.onQuote,
     required this.onOrder,
   });
 
   final _MaterialProduct product;
-  final VoidCallback onQuote;
   final VoidCallback onOrder;
 
   @override
@@ -58,11 +56,6 @@ class _MaterialCard extends StatelessWidget {
                   ),
                 ),
               ),
-              OutlinedButton(
-                onPressed: onQuote,
-                child: const Text('Request Quote'),
-              ),
-              const SizedBox(width: AppSpacing.xs),
               FilledButton(onPressed: onOrder, child: const Text('Order Now')),
             ],
           ),
