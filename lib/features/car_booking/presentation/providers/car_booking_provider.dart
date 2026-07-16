@@ -17,29 +17,45 @@ class CarBookingState {
 
 /// Provides car rental fleet and bookings for the Car Booking module.
 final carBookingProvider =
-    NotifierProvider<CarBookingNotifier, CarBookingState>(
+    AsyncNotifierProvider<CarBookingNotifier, CarBookingState>(
   CarBookingNotifier.new,
 );
 
 /// Manages the in-memory car booking ledger.
-class CarBookingNotifier extends Notifier<CarBookingState> {
+class CarBookingNotifier extends AsyncNotifier<CarBookingState> {
   late final CarBookingRepository _repository;
 
   @override
-  CarBookingState build() {
+  Future<CarBookingState> build() {
     _repository = ref.read(carBookingRepositoryProvider);
     return _currentState();
   }
 
-  CarBookingState _currentState() {
+  Future<CarBookingState> _currentState() async {
     return CarBookingState(
-      vehicles: _repository.listVehicles(),
-      bookings: _repository.listBookings(),
+      vehicles: await _repository.listVehicles(),
+      bookings: await _repository.listBookings(),
     );
   }
 
-  void addBooking(CarBooking booking) {
-    _repository.addBooking(booking);
-    state = _currentState();
+  Future<void> createBooking({
+    required String vehicleId,
+    required String customerName,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    await _repository.createBooking(
+      vehicleId: vehicleId,
+      customerName: customerName,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_currentState);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_currentState);
   }
 }

@@ -8,7 +8,6 @@ import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/core/widgets/app_text_field.dart';
 import 'package:finhub/core/widgets/primary_button.dart';
-import 'package:finhub/features/car_booking/domain/entities/car_booking.dart';
 import 'package:finhub/features/car_booking/presentation/providers/car_booking_provider.dart';
 
 /// Form page for creating a new car rental booking.
@@ -25,6 +24,7 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
   String? _vehicleId;
   DateTime? _pickupDate;
   DateTime? _returnDate;
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -34,7 +34,21 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final vehicles = ref.watch(carBookingProvider).vehicles;
+    final asyncState = ref.watch(carBookingProvider);
+    return asyncState.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Scaffold(
+        appBar: AppBar(title: const Text('New booking')),
+        body: Center(child: Text(error.toString())),
+      ),
+      data: _buildForm,
+    );
+  }
+
+  Widget _buildForm(CarBookingState bookingState) {
+    final vehicles = bookingState.vehicles;
     final availableVehicles =
         vehicles.where((vehicle) => vehicle.isAvailable).toList();
     if (_vehicleId == null ||
@@ -102,9 +116,9 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
               _AmountBanner(days: days, amount: amount),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
-                text: 'Confirm booking',
+                text: _submitting ? 'Creating booking...' : 'Confirm booking',
                 icon: Icons.check_rounded,
-                enabled: availableVehicles.isNotEmpty,
+                enabled: availableVehicles.isNotEmpty && !_submitting,
                 onPressed: _submit,
               ),
             ],
@@ -146,7 +160,7 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final pickup = _pickupDate;
     final returns = _returnDate;
@@ -161,22 +175,23 @@ class _NewCarBookingPageState extends ConsumerState<NewCarBookingPage> {
       return;
     }
 
-    final vehicle = ref
-        .read(carBookingProvider)
-        .vehicles
-        .firstWhere((item) => item.id == vehicleId);
-    final booking = CarBooking(
-      id: 'booking-${DateTime.now().microsecondsSinceEpoch}',
-      customerName: _customerController.text.trim(),
-      carModel: vehicle.model,
-      registrationNumber: vehicle.registrationNumber,
-      startDate: pickup,
-      endDate: returns,
-      dailyRate: vehicle.dailyRate,
-      status: 'Upcoming',
-    );
-    ref.read(carBookingProvider.notifier).addBooking(booking);
-    Navigator.of(context).pop();
+    setState(() => _submitting = true);
+    try {
+      await ref.read(carBookingProvider.notifier).createBooking(
+            vehicleId: vehicleId,
+            customerName: _customerController.text.trim(),
+            startDate: pickup,
+            endDate: returns,
+          );
+      if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   String? _required(String? value) {

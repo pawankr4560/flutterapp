@@ -1,18 +1,135 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:finhub/core/constants/app_config.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
 import '../../domain/entities/car_booking.dart';
 import '../../domain/entities/vehicle.dart';
 
 final carBookingRepositoryProvider = Provider<CarBookingRepository>((ref) {
-  return InMemoryCarBookingRepository();
+  return HttpCarBookingRepository();
 });
 
 abstract class CarBookingRepository {
-  List<Vehicle> listVehicles();
+  Future<List<Vehicle>> listVehicles();
 
-  List<CarBooking> listBookings();
+  Future<List<CarBooking>> listBookings();
 
-  void addBooking(CarBooking booking);
+  Future<CarBooking> createBooking({
+    required String vehicleId,
+    required String customerName,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
+}
+
+class HttpCarBookingRepository implements CarBookingRepository {
+  HttpCarBookingRepository({
+    ApiClient? apiClient,
+    String Function()? bearerTokenProvider,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _bearerTokenProvider =
+            bearerTokenProvider ?? (() => AuthSession.instance.bearerToken);
+
+  final ApiClient _apiClient;
+  final String Function() _bearerTokenProvider;
+
+  Uri get _vehiclesUri =>
+      Uri.parse('${AppConfig.baseUrl}/car-booking/vehicles');
+  Uri get _bookingsUri =>
+      Uri.parse('${AppConfig.baseUrl}/car-booking/bookings');
+
+  @override
+  Future<List<Vehicle>> listVehicles() async {
+    final response = await _apiClient.get(
+      _vehiclesUri,
+      bearerToken: _bearerTokenProvider(),
+    );
+    return _listFromResponse(response.body)
+        .whereType<Map<String, dynamic>>()
+        .map(Vehicle.fromJson)
+        .where((vehicle) => vehicle.id.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  Future<List<CarBooking>> listBookings() async {
+    final response = await _apiClient.get(
+      _bookingsUri,
+      bearerToken: _bearerTokenProvider(),
+    );
+    return _listFromResponse(response.body)
+        .whereType<Map<String, dynamic>>()
+        .map(CarBooking.fromJson)
+        .where((booking) => booking.id.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  Future<CarBooking> createBooking({
+    required String vehicleId,
+    required String customerName,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final response = await _apiClient.post(
+      _bookingsUri,
+      bearerToken: _bearerTokenProvider(),
+      body: {
+        'vehicleId': vehicleId,
+        'customerName': customerName,
+        'startDate': _dateOnly(startDate),
+        'endDate': _dateOnly(endDate),
+      },
+    );
+    final data = _mapFromResponse(response.body);
+    final booking = CarBooking.fromJson(data);
+    if (booking.id.isEmpty) {
+      throw const ApiException('Unable to parse created booking response.');
+    }
+    return booking;
+  }
+
+  List<dynamic> _listFromResponse(String body) {
+    try {
+      final decoded = body.trim().isEmpty ? null : jsonDecode(body);
+      return switch (decoded) {
+        {'data': {'items': final List<dynamic> values}} => values,
+        {'data': final List<dynamic> values} => values,
+        {'items': final List<dynamic> values} => values,
+        List<dynamic> values => values,
+        _ => const <dynamic>[],
+      };
+    } catch (_) {
+      throw const ApiException('Unable to parse car booking response.');
+    }
+  }
+
+  Map<String, dynamic> _mapFromResponse(String body) {
+    try {
+      final decoded = body.trim().isEmpty ? null : jsonDecode(body);
+      return switch (decoded) {
+        {'data': final Map<String, dynamic> data} => data,
+        Map<String, dynamic> data => data,
+        _ => throw const ApiException('Unable to parse booking response.'),
+      };
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException('Unable to parse booking response.');
+    }
+  }
+}
+
+String _dateOnly(DateTime date) {
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
 }
 
 class InMemoryCarBookingRepository implements CarBookingRepository {
@@ -81,13 +198,29 @@ class InMemoryCarBookingRepository implements CarBookingRepository {
   ];
 
   @override
-  List<Vehicle> listVehicles() => List.unmodifiable(_vehicles);
+  Future<List<Vehicle>> listVehicles() async => List.unmodifiable(_vehicles);
 
   @override
-  List<CarBooking> listBookings() => List.unmodifiable(_bookings);
+  Future<List<CarBooking>> listBookings() async => List.unmodifiable(_bookings);
 
   @override
-  void addBooking(CarBooking booking) {
+  Future<CarBooking> createBooking({
+    required String vehicleId,
+    required String customerName,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final vehicle = _vehicles.firstWhere((item) => item.id == vehicleId);
+    final booking = CarBooking(
+      id: 'booking-${DateTime.now().microsecondsSinceEpoch}',
+      customerName: customerName,
+      carModel: vehicle.model,
+      registrationNumber: vehicle.registrationNumber,
+      startDate: startDate,
+      endDate: endDate,
+      dailyRate: vehicle.dailyRate,
+      status: 'Upcoming',
+    );
     _vehicles = [
       for (final vehicle in _vehicles)
         vehicle.registrationNumber == booking.registrationNumber
@@ -95,5 +228,6 @@ class InMemoryCarBookingRepository implements CarBookingRepository {
             : vehicle,
     ];
     _bookings = [booking, ..._bookings];
+    return booking;
   }
 }

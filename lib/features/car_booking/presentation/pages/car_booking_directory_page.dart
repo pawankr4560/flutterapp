@@ -25,7 +25,40 @@ class _CarBookingDirectoryPageState
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(carBookingProvider);
+    final asyncState = ref.watch(carBookingProvider);
+    return asyncState.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Scaffold(
+        appBar: AppBar(title: const Text('Car Booking Directory')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyLarge(context),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                FilledButton(
+                  onPressed: () =>
+                      ref.read(carBookingProvider.notifier).refresh(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      data: _buildContent,
+    );
+  }
+
+  Widget _buildContent(CarBookingState state) {
     final vehicles = _selectedStatus == 'All'
         ? state.vehicles
         : state.vehicles
