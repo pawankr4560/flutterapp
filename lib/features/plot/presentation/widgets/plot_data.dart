@@ -17,9 +17,12 @@ typedef _PlotData = ({
   String sellerPhone,
   List<String> images,
   List<String> amenities,
+  bool isSaved,
 });
 
 typedef _VisitData = ({
+  String id,
+  String plotId,
   String propertyName,
   String date,
   String time,

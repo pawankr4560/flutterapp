@@ -1,9 +1,19 @@
 part of 'plot_directory_page.dart';
 
-class _PlotDetailsScreen extends StatelessWidget {
+class _PlotDetailsScreen extends StatefulWidget {
   const _PlotDetailsScreen({required this.plot});
 
   final _PlotData plot;
+
+  @override
+  State<_PlotDetailsScreen> createState() => _PlotDetailsScreenState();
+}
+
+class _PlotDetailsScreenState extends State<_PlotDetailsScreen> {
+  final _service = _PlotApiService();
+  late bool _isSaved = widget.plot.isSaved;
+
+  _PlotData get plot => widget.plot;
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +43,8 @@ class _PlotDetailsScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       _FloatingButton(
-                        icon: Icons.favorite_border_rounded,
-                        onPressed: () {},
+                        icon: _isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        onPressed: _toggleSaved,
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       _FloatingButton(
@@ -124,9 +134,9 @@ class _PlotDetailsScreen extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.favorite_border_rounded),
-                label: const Text('Save'),
+                onPressed: _toggleSaved,
+                icon: Icon(_isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded),
+                label: Text(_isSaved ? 'Saved' : 'Save'),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -142,6 +152,19 @@ class _PlotDetailsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _toggleSaved() async {
+    try {
+      if (_isSaved) {
+        await _service.removeSaved(plot.id);
+      } else {
+        await _service.savePlot(plot.id);
+      }
+      if (mounted) setState(() => _isSaved = !_isSaved);
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 }
 

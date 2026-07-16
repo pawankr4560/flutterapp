@@ -1,9 +1,10 @@
 part of '../pages/plot_directory_page.dart';
 
 class _SavedPlotCard extends StatelessWidget {
-  const _SavedPlotCard({required this.plot});
+  const _SavedPlotCard({required this.plot, required this.onRemove});
 
   final _PlotData plot;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +59,7 @@ class _SavedPlotCard extends StatelessWidget {
             ),
             IconButton(
               tooltip: 'Remove favourite',
-              onPressed: () {},
+              onPressed: onRemove,
               icon: const Icon(Icons.favorite_rounded, color: AppColors.error),
             ),
           ],

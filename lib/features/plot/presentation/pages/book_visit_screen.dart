@@ -10,11 +10,13 @@ class _BookVisitScreen extends StatefulWidget {
 }
 
 class _BookVisitScreenState extends State<_BookVisitScreen> {
+  final _service = _PlotApiService();
   final _nameController = TextEditingController();
   final _mobileController = TextEditingController();
   final _remarksController = TextEditingController();
   DateTime? _visitDate;
   TimeOfDay? _visitTime;
+  bool _saving = false;
 
   @override
   void dispose() {
@@ -82,9 +84,9 @@ class _BookVisitScreenState extends State<_BookVisitScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             PlotPrimaryButton(
-              label: 'Book Visit',
+              label: _saving ? 'Booking...' : 'Book Visit',
               icon: Icons.check_circle_outline_rounded,
-              onPressed: _showSuccessDialog,
+              onPressed: _saving ? null : _bookVisit,
             ),
           ],
         ),
@@ -112,6 +114,35 @@ class _BookVisitScreenState extends State<_BookVisitScreen> {
     );
     if (picked != null) {
       setState(() => _visitTime = picked);
+    }
+  }
+
+  Future<void> _bookVisit() async {
+    if (_nameController.text.trim().isEmpty ||
+        _mobileController.text.trim().isEmpty ||
+        _visitDate == null ||
+        _visitTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete all required fields.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await _service.bookVisit(
+        plotId: widget.plot.id,
+        name: _nameController.text.trim(),
+        mobileNumber: _mobileController.text.trim(),
+        visitDate: _visitDate!,
+        visitTime: _visitTime!,
+        remarks: _remarksController.text.trim(),
+      );
+      if (!mounted) return;
+      _showSuccessDialog();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 

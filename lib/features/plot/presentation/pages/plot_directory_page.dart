@@ -1,11 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
+import 'package:finhub/core/constants/app_config.dart';
 import 'package:finhub/core/theme/app_colors.dart';
 import 'package:finhub/core/theme/app_text_styles.dart';
 import 'package:finhub/core/widgets/app_radius.dart';
 import 'package:finhub/core/widgets/app_spacing.dart';
 import 'package:finhub/features/plot/presentation/widgets/plot_listing_card.dart';
+import 'package:finhub/data/api/api_client.dart';
+import 'package:finhub/data/api/api_exception.dart';
+import 'package:finhub/features/auth/application/services/auth_session.dart';
 
+part 'plot_api_service.dart';
 part '../widgets/plot_data.dart';
 part 'plot_details_screen.dart';
 part 'book_visit_screen.dart';
@@ -30,105 +37,20 @@ class PlotDirectoryPage extends StatefulWidget {
 }
 
 class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
+  final _service = _PlotApiService();
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   String _selectedFilter = 'Location';
   bool _isGrid = false;
+  List<_PlotData> _plots = [];
+  bool _loading = true;
+  String? _error;
 
-  static final List<_PlotData> _plots = [
-    (
-      id: 'green-valley-a12',
-      title: 'Green Valley Premium Plot',
-      location: 'Indore Bypass, Madhya Pradesh',
-      area: '1,500 sq.ft',
-      price: 'Rs. 42.5L',
-      status: 'Available',
-      propertyType: 'Residential Plot',
-      roadWidth: '30 ft',
-      electricity: 'Available',
-      water: 'Borewell + municipal line',
-      registration: 'RERA verified',
-      description:
-          'A well-planned residential plot inside a gated community with wide internal roads, street lighting, and strong connectivity to schools, hospitals, and the city bypass.',
-      sellerName: 'Amit Verma',
-      sellerPhone: '+91 98765 43210',
-      images: [
-        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: ['Gated', 'Road', 'Water', 'Electricity'],
-    ),
-    (
-      id: 'lakeview-c03',
-      title: 'Lakeview Corner Plot',
-      location: 'Rau Road, Indore',
-      area: '1,800 sq.ft',
-      price: 'Rs. 58L',
-      status: 'Booked',
-      propertyType: 'Corner Plot',
-      roadWidth: '40 ft',
-      electricity: 'Available',
-      water: 'Municipal line',
-      registration: 'Registry ready',
-      description:
-          'Corner-facing plot with lake approach road, premium frontage, and a peaceful residential neighborhood suited for a spacious family home.',
-      sellerName: 'Neha Sharma',
-      sellerPhone: '+91 91234 56780',
-      images: [
-        'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: ['Corner', 'Park', 'Water', 'Security'],
-    ),
-    (
-      id: 'sunrise-b07',
-      title: 'Sunrise Enclave Plot',
-      location: 'Ujjain Road, Indore',
-      area: '1,200 sq.ft',
-      price: 'Rs. 31.8L',
-      status: 'Available',
-      propertyType: 'Residential Plot',
-      roadWidth: '25 ft',
-      electricity: 'Available',
-      water: 'Borewell',
-      registration: 'Clear title',
-      description:
-          'Budget-friendly plot in a fast-growing corridor with clean title, nearby public transport, and reliable access to basic civic amenities.',
-      sellerName: 'Rohit Jain',
-      sellerPhone: '+91 99887 76655',
-      images: [
-        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: ['Loan', 'Road', 'School', 'Drainage'],
-    ),
-    (
-      id: 'royal-heights-d18',
-      title: 'Royal Heights East Facing',
-      location: 'Super Corridor, Indore',
-      area: '2,400 sq.ft',
-      price: 'Rs. 82L',
-      status: 'Sold',
-      propertyType: 'Villa Plot',
-      roadWidth: '45 ft',
-      electricity: 'Underground cabling',
-      water: 'Dual water connection',
-      registration: 'Registered',
-      description:
-          'Large east-facing plot in a premium address with wide roads, landscaped open spaces, and quick access to commercial hubs.',
-      sellerName: 'Karan Malhotra',
-      sellerPhone: '+91 90909 11223',
-      images: [
-        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: ['Premium', 'Club', 'Park', 'Security'],
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPlots();
+  }
 
   @override
   void dispose() {
@@ -138,6 +60,17 @@ class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Plot Purchase')),
+        body: Center(
+          child: FilledButton(onPressed: _loadPlots, child: const Text('Retry')),
+        ),
+      );
+    }
     final filteredPlots = _plots.where((plot) {
       final query = _query.trim().toLowerCase();
       if (query.isEmpty) return true;
@@ -153,7 +86,7 @@ class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
           IconButton(
             tooltip: 'Saved plots',
             icon: const Icon(Icons.favorite_border_rounded),
-            onPressed: () => _push(context, _SavedPlotsScreen(plots: _plots)),
+            onPressed: () => _push(context, const _SavedPlotsScreen()),
           ),
           IconButton(
             tooltip: 'My visits',
@@ -239,6 +172,7 @@ class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
                       return _PlotCardFromData(
                         plot: plot,
                         isCompact: true,
+                        onFavorite: () => _toggleSaved(plot),
                         onViewDetails: () => _openDetails(plot),
                       );
                     },
@@ -247,6 +181,7 @@ class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
                   for (final plot in filteredPlots) ...[
                     _PlotCardFromData(
                       plot: plot,
+                      onFavorite: () => _toggleSaved(plot),
                       onViewDetails: () => _openDetails(plot),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -259,8 +194,40 @@ class _PlotDirectoryPageState extends State<PlotDirectoryPage> {
     );
   }
 
-  void _openDetails(_PlotData plot) {
-    _push(context, _PlotDetailsScreen(plot: plot));
+  Future<void> _openDetails(_PlotData plot) async {
+    try {
+      final details = await _service.fetchPlot(plot.id);
+      if (mounted) _push(context, _PlotDetailsScreen(plot: details));
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  Future<void> _loadPlots() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final plots = await _service.fetchPlots();
+      if (mounted) setState(() { _plots = plots; _loading = false; });
+    } catch (error) {
+      if (mounted) setState(() { _error = error.toString(); _loading = false; });
+    }
+  }
+
+  Future<void> _toggleSaved(_PlotData plot) async {
+    try {
+      if (plot.isSaved) {
+        await _service.removeSaved(plot.id);
+      } else {
+        await _service.savePlot(plot.id);
+      }
+      if (!mounted) return;
+      setState(() {
+        final index = _plots.indexWhere((item) => item.id == plot.id);
+        if (index >= 0) _plots[index] = _copyPlot(plot, isSaved: !plot.isSaved);
+      });
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 }
 

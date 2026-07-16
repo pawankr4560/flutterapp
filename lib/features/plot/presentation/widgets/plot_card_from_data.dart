@@ -4,11 +4,13 @@ class _PlotCardFromData extends StatelessWidget {
   const _PlotCardFromData({
     required this.plot,
     required this.onViewDetails,
+    required this.onFavorite,
     this.isCompact = false,
   });
 
   final _PlotData plot;
   final VoidCallback onViewDetails;
+  final VoidCallback onFavorite;
   final bool isCompact;
 
   @override
@@ -23,7 +25,7 @@ class _PlotCardFromData extends StatelessWidget {
       status: plot.status,
       amenities: plot.amenities,
       isCompact: isCompact,
-      onFavorite: () {},
+      onFavorite: onFavorite,
       onViewDetails: onViewDetails,
     );
   }
